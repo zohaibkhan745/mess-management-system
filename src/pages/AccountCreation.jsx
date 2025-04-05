@@ -1,4 +1,5 @@
 import React from "react";
+import {Link } from "react-router-dom"; // Import Link for navigation
 import "../styles/pages/AccountCreation.css"; // Import the CSS file for styling
 import Button from "../components/button.jsx";
 const AccountCreationPage = () => {
@@ -60,7 +61,7 @@ const AccountCreationPage = () => {
           </div>
 
           <p className="login-text">
-            Already have an Account? <a href="/login">Login</a>
+            Already have an Account? <Link to="/login">Login</Link>
           </p>
         </div>
       </div>

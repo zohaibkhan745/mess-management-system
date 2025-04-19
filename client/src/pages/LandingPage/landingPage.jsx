@@ -1,9 +1,6 @@
 import React from 'react';
 import './landingPage.css';
 import { Link, useNavigate } from 'react-router-dom';
-// Use the same image path you've already implemented
-const foodImage = '../../assets/landingPage.jpg';
-const LogoImg = '../../assets/logo-pic.png';
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -17,7 +14,7 @@ const LandingPage = () => {
       <header className="header">
         <div className="logo">
           <div className="logo-icon">
-          <img className="logo-icn" src={LogoImg} alt="Delicious meal in a blue-rimmed bowl" />
+            <img className="logo-icn" src={process.env.PUBLIC_URL + "/assets/logo-pic.png"} alt="Delicious meal in a blue-rimmed bowl" />
           </div>
           <span className="logo-text">Giki Mess Management System</span>
         </div>
@@ -45,7 +42,7 @@ const LandingPage = () => {
           <button className="get-started" onClick={handleGetStarted}>Get Started</button>
         </div>
         <div className="hero-image">
-          <img src={foodImage} alt="Delicious meal in a blue-rimmed bowl" />
+          <img src={process.env.PUBLIC_URL + "/assets/landingPage.jpg"} alt="Delicious meal in a blue-rimmed bowl" />
         </div>
       </main>
     </div>

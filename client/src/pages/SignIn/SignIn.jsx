@@ -48,7 +48,7 @@ const SignIn = () => {
         if (data.token) {
           localStorage.setItem("authToken", data.token);
         }
-        navigate("/testing");
+        navigate("/dashboard"); // Changed from "/testing" to "/dashboard"
       } else {
         setErrors({ ...errors, serverError: data.message || "Invalid email or password" });
       }

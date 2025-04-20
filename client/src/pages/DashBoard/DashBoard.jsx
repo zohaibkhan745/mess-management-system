@@ -26,7 +26,7 @@ export default function Dashboard() {
         <div className="menu-grid">
           <Link to="/mess-inout" className="menu-item">
             <div className="menu-content">
-              <h2>Mes In/Out</h2>
+              <h2>Mess In/Out</h2>
             </div>
           </Link>
 

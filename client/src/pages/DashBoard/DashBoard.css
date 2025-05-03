@@ -85,8 +85,10 @@
   display: grid;
   grid-template-columns: repeat(3, 180px);
   grid-template-rows: repeat(2, 180px);
-  gap: 20px;
-  max-width: 600px;
+  gap: 30px;
+  /* Increased gap between items */
+  max-width: 640px;
+  /* Slightly increased to accommodate larger gaps */
 }
 
 .menu-item {
@@ -100,11 +102,41 @@
   transition: transform 0.2s, background-color 0.2s;
   padding: 20px;
   text-align: center;
+  position: relative;
+  /* Add position relative */
+  isolation: isolate;
+  /* Isolate the stacking context */
+  overflow: hidden;
+  /* Ensure effects don't leak outside */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  /* Add shadow for depth */
 }
 
 .menu-item:hover {
   transform: translateY(-5px);
   background-color: rgba(27, 38, 59, 0.9);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+  /* Enhanced shadow on hover */
+  z-index: 2;
+  /* Ensure hovered item appears above others */
+}
+
+/* New styles to add a hover indicator */
+.menu-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background-color: rgba(230, 30, 121, 0.5);
+  /* Pink accent color */
+  transition: height 0.2s ease;
+  z-index: -1;
+}
+
+.menu-item:hover::after {
+  height: 5px;
 }
 
 .menu-content h2 {
@@ -118,6 +150,8 @@
   .menu-grid {
     grid-template-columns: repeat(2, 180px);
     grid-template-rows: repeat(3, 180px);
+    gap: 25px;
+    /* Slightly smaller gap on medium screens */
   }
 }
 
@@ -142,6 +176,8 @@
   .menu-grid {
     grid-template-columns: repeat(1, 180px);
     grid-template-rows: repeat(6, 180px);
+    gap: 20px;
+    /* Even smaller gap on mobile */
   }
 
   .dashboard-main {

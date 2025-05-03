@@ -6,6 +6,10 @@ import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import LandingPage from "./pages/LandingPage/landingPage";
 import DashBoard from "./pages/DashBoard/DashBoard"; // Import the Dashboard component
 import MessInOut from "./pages/MessInOut/MessInOut"; // Import the MessInOut component
+import Menu from "./pages/Menu/Menu"; // Import the Menu component
+import Rules from "./pages/Rules/Rules"; // Import the Rules component
+import FAQs from "./pages/FAQs/FAQs"; // Import the FAQs component
+import Feedback from "./pages/Feedback/Feedback"; // Import the Feedback component
 
 function App() {
   return (
@@ -18,6 +22,10 @@ function App() {
         <Route path="/dashboard" element={<DashBoard />} /> {/* Add the Dashboard route */}
         <Route path="/DashBoard" element={<DashBoard />} /> {/* Keep this for backward compatibility */}
         <Route path="/mess-inout" element={<MessInOut />} /> {/* Add the MessInOut route */}
+        <Route path="/menu" element={<Menu />} /> {/* Add the Menu route */}
+        <Route path="/rules" element={<Rules />} /> {/* Add the Rules route */}
+        <Route path="/faqs" element={<FAQs />} /> {/* Add the FAQs route */}
+        <Route path="/feedback" element={<Feedback />} /> {/* Add the Feedback route */}
       </Routes>
     </Router>
   );

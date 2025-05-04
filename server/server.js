@@ -1,62 +1,180 @@
-const express = require('express');
-const cors = require('cors');
-const pool = require('./database.js');
-
+require("dotenv").config();
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const pool = require("./database"); // Import the PostgreSQL pool from database.js
 const app = express();
+const port = 4000;
 
-app.use(express.json());
+// Middleware
+app.use(bodyParser.json());
 app.use(cors());
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Internal server error' });
-});
-
+// User Registration endpoint
 app.post("/adduser", async (req, res) => {
-    const { fname, lname, email, password } = req.body;
+  const { fname, lname, email, password } = req.body;
 
-    if (!fname || !lname || !email || !password) {
-        return res.status(400).json({ message: "All fields are required." });
+  if (!fname || !lname || !email || !password) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Check if user already exists
+    const userCheck = await pool.query(
+      "SELECT * FROM students_accounts_info WHERE email = $1",
+      [email]
+    );
+    if (userCheck.rowCount > 0) {
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists." });
     }
 
-    try {
-        const checkQuery = `SELECT * FROM students_accounts_info WHERE email = $1`;
-        const checkResult = await pool.query(checkQuery, [email]);
+    // Insert new user
+    const result = await pool.query(
+      "INSERT INTO students_accounts_info (fname, lname, email, password) VALUES ($1, $2, $3, $4) RETURNING id, fname, lname, email",
+      [fname, lname, email, password]
+    );
 
-        if (checkResult.rows.length > 0) {
-            return res.status(409).json({ message: "User already exists. Please try logging in." });
-        }
-
-        const insertQuery = `INSERT INTO students_accounts_info (fname, lname, email, password) VALUES ($1, $2, $3, $4)`;
-        const values = [fname, lname, email, password];
-        await pool.query(insertQuery, values);
-
-        res.status(201).json({ message: "User added successfully" });
-    } catch (error) {
-        console.error("Error adding user:", error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    // Return success
+    res.status(201).json({
+      message: "User registered successfully",
+      user: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error during registration:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error. Please try again." });
+  }
 });
 
+// Keep the signup endpoint for backward compatibility
+app.post("/signup", async (req, res) => {
+  const { name, email, password } = req.body;
+  let fname = name;
+  let lname = "";
+
+  // Split name into first and last name if it contains a space
+  if (name && name.includes(" ")) {
+    const nameParts = name.split(" ");
+    fname = nameParts[0];
+    lname = nameParts.slice(1).join(" ");
+  }
+
+  if (!fname || !email || !password) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  try {
+    // Check if user already exists
+    const userCheck = await pool.query(
+      "SELECT * FROM students_accounts_info WHERE email = $1",
+      [email]
+    );
+    if (userCheck.rowCount > 0) {
+      return res
+        .status(400)
+        .json({ message: "User with this email already exists." });
+    }
+
+    // Insert new user
+    const result = await pool.query(
+      "INSERT INTO students_accounts_info (fname, lname, email, password) VALUES ($1, $2, $3, $4) RETURNING id, fname, lname, email",
+      [fname, lname, email, password]
+    );
+
+    // Return success
+    res.status(201).json({
+      message: "User registered successfully",
+      user: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error during registration:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error. Please try again." });
+  }
+});
+
+// Signin endpoint
 app.post("/signin", async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
+  console.log("Login attempt:", { email });
 
-    try {
-        const query = `SELECT * FROM students_accounts_info WHERE email = $1 AND password = $2`;
-        const values = [email, password];
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Email and password are required." });
+  }
 
-        const result = await pool.query(query, values);
+  try {
+    // Query to check if the user exists with the provided credentials
+    const query = "SELECT * FROM students_accounts_info WHERE email = $1";
+    const result = await pool.query(query, [email]);
+    console.log("Query result:", { rowCount: result.rowCount });
 
-        if (result.rows.length > 0) {
-            res.status(200).json({ message: "Sign-in successful", user: result.rows[0] });
-        } else {
-            res.status(401).json({ message: "Invalid email or password" });
-        }
-    } catch (error) {
-        console.error("Error during sign-in:", error);
-        res.status(500).json({ message: "Internal server error" });
+    // Check if user exists
+    if (result.rowCount === 0) {
+      return res.status(401).json({ message: "Invalid email or password." });
     }
+
+    const user = result.rows[0];
+    console.log("User found:", { id: user.id, email: user.email });
+
+    // In a real application, you would compare hashed passwords
+    // For this example, we're assuming the passwords are stored in plain text
+    if (user.password !== password) {
+      console.log("Password mismatch");
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    // Create a simple token (in a real app, use JWT)
+    const token = Buffer.from(`${user.id}:${user.email}`).toString("base64");
+
+    // Return success with token
+    res.status(200).json({
+      message: "Login successful",
+      token: token,
+      user: {
+        id: user.id,
+        name: `${user.fname} ${user.lname}`.trim(),
+        email: user.email,
+      },
+    });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error. Please try again." });
+  }
 });
 
-app.listen(4000, () => console.log('Server running on port 4000'));
+// Feedback submission endpoint
+app.post("/api/feedback", async (req, res) => {
+  const { email, message } = req.body;
+
+  if (!email || !message) {
+    return res.status(400).json({ error: "Email and message are required." });
+  }
+
+  try {
+    // Using PostgreSQL parameterized query with $1, $2 syntax
+    const query =
+      "INSERT INTO feedback (email, message) VALUES ($1, $2) RETURNING *";
+    const result = await pool.query(query, [email, message]);
+
+    res.status(201).json({
+      message: "Feedback submitted successfully.",
+      feedback: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error inserting feedback:", err);
+    res.status(500).json({ error: "Failed to submit feedback." });
+  }
+});
+
+// Start server
+app.listen(port, () => {
+  console.log(`Server running on http://localhost:${port}`);
+});

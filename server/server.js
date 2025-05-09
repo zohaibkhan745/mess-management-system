@@ -174,6 +174,19 @@ app.post("/api/feedback", async (req, res) => {
   }
 });
 
+// Get weekly menu
+app.get("/menu", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT day, breakfast, lunch, dinner FROM meals_menu ORDER BY id ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching menu:", err);
+    res.status(500).json({ message: "Failed to fetch menu" });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

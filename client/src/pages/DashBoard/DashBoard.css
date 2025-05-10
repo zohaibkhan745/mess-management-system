@@ -121,6 +121,29 @@
   /* Ensure hovered item appears above others */
 }
 
+/* Disabled menu item styles */
+.menu-item.disabled {
+  cursor: not-allowed;
+  background-color: rgba(100, 100, 100, 0.3);
+  position: relative;
+}
+
+.menu-item.disabled:hover {
+  transform: none;
+  background-color: rgba(100, 100, 100, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.menu-item.disabled::after {
+  background-color: rgba(150, 150, 150, 0.3);
+}
+
+.menu-item.disabled .menu-content small {
+  font-style: italic;
+  opacity: 0.8;
+  font-size: 12px;
+}
+
 /* New styles to add a hover indicator */
 .menu-item::after {
   content: '';

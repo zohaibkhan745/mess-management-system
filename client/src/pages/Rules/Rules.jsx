@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Rules.css';
+import Navbar from '../../components/Navbar';
 
 export default function Rules() {
     const messRules = [
@@ -33,34 +34,15 @@ export default function Rules() {
             description: "If you need a special meal (e.g., diet meal), inform the mess management in advance."
         }
     ];
-
     return (
         <div className="rules-container">
-            <header className="rules-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="rules-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
-
+            <Navbar />
             <div className="rules-content">
                 <div className="rules-card">
                     <Link to="/dashboard" className="back-button">
                         <span>←</span>
                     </Link>
-
                     <h1 className="card-title">Mess Rules & Guidelines</h1>
-
                     <div className="rules-list">
                         {messRules.map((rule, index) => (
                             <div key={index} className="rule-item">

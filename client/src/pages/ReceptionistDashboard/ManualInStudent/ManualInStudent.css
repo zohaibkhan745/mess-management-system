@@ -1,0 +1,286 @@
+/* Manual IN Student Styles */
+.manual-in-container {
+    width: 100%;
+    min-height: 100vh;
+    background-image: url("/public/assets/landingPage.jpg");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.manual-in-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(8, 15, 30, 0.6);
+    z-index: 0;
+}
+
+.manual-in-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: rgba(13, 27, 42, 0.8);
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.manual-in-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.manual-in-nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.manual-in-content {
+    position: relative;
+    z-index: 1;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+}
+
+.manual-in-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(13, 27, 42, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.card-title {
+    text-align: center;
+    color: #0d1b2a;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.manual-in-form {
+    margin-top: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #0d1b2a;
+}
+
+.search-input-container {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input-container input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.search-button {
+    background-color: #0d1b2a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.search-button:hover:not(:disabled) {
+    background-color: #1b263b;
+}
+
+.search-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+.message {
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.message.success {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+}
+
+.message.error {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #c0392b;
+}
+
+.student-info {
+    background-color: rgba(13, 27, 42, 0.05);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.student-profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.student-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 15px;
+    background-color: #e0e0e0;
+}
+
+.student-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.default-avatar {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0d1b2a;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.student-details {
+    flex: 1;
+}
+
+.student-details h3 {
+    margin: 0 0 5px 0;
+    color: #0d1b2a;
+}
+
+.student-details p {
+    margin: 5px 0;
+    color: #333;
+}
+
+.mark-attendance-button {
+    width: 100%;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.mark-attendance-button:hover:not(:disabled) {
+    background-color: #219653;
+}
+
+.mark-attendance-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .manual-in-header {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .manual-in-nav ul {
+        margin-top: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .profile-icon {
+        margin-top: 15px;
+    }
+
+    .manual-in-card {
+        padding: 20px;
+        width: 95%;
+    }
+
+    .search-input-container {
+        flex-direction: column;
+    }
+
+    .search-button {
+        width: 100%;
+    }
+
+    .student-profile {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .student-avatar {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .manual-in-content {
+        padding: 20px;
+    }
+
+    .manual-in-card {
+        padding: 15px;
+        width: 100%;
+    }
+
+    .card-title {
+        font-size: 24px;
+    }
+
+    .back-button {
+        top: 10px;
+        left: 10px;
+    }
+}

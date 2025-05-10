@@ -2,13 +2,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./SignIn.css";
-import Button from "../../components/button.jsx";
+import { useAuth } from "../../contexts/AuthContext";
 
 const SignIn = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", password: "", role: "student" });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const validateForm = () => {
     const newErrors = {};
@@ -31,7 +32,6 @@ const SignIn = () => {
       setErrors({ ...errors, [id]: "" });
     }
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -41,14 +41,22 @@ const SignIn = () => {
       const response = await fetch("http://localhost:4000/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        }),
       });
-      const data = await response.json();
-      if (response.ok) {
-        if (data.token) {
-          localStorage.setItem("authToken", data.token);
+      const data = await response.json(); if (response.ok) {
+        // Use the AuthContext login function
+        login(data.user);
+
+        // Redirect based on user role
+        if (data.user.role === "receptionist") {
+          navigate("/receptionist-dashboard");
+        } else {
+          navigate("/dashboard");
         }
-        navigate("/dashboard"); // Changed from "/testing" to "/dashboard"
       } else {
         setErrors({ ...errors, serverError: data.message || "Invalid email or password" });
       }
@@ -58,66 +66,72 @@ const SignIn = () => {
       setIsSubmitting(false);
     }
   };
-
   return (
-    <div className="container">
-      <div className="content-wrapper">
-        <img className="meal-image" src="/assets/sigininmeal.png" alt="Delicious Meal" />
-        <div className="left-panel">
-          <h1 className="createtext">Sign In</h1>
-          <img className="image-container" src="/assets/background.png" alt="Hello" />
-        </div>
-        <div className="right-panel">
-          <div className="form-container">
-            <h1>Sign In</h1>
-            <form onSubmit={handleSubmit}>
-              <div className="input-group">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={errors.email ? "error-input" : ""}
-                  autoComplete="username"
-                />
-                {errors.email && <span className="error-message">{errors.email}</span>}
-              </div>
-              <div className="input-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={errors.password ? "error-input" : ""}
-                  autoComplete="current-password"
-                />
-                {errors.password && <span className="error-message">{errors.password}</span>}
-                <div className="forgot-password">
-                  <Link to="/forgotpassword">Forgot Password?</Link>
-                </div>
-              </div>
-              {errors.serverError && (
-                <div className="server-error-message">{errors.serverError}</div>
-              )}
-              <div className="input-group">
-                <Button
-                  text={isSubmitting ? "Signing In..." : "Sign In"}
-                  className="create-btn"
-                  disabled={isSubmitting}
-                />
-              </div>
-            </form>
-            <div className="separator">
-              <div className="line"></div>
-              <span>or</span>
-              <div className="line"></div>
-            </div>
-            <p className="login-text">
-              Don't have an account? <Link to="/signup">Create Account</Link>
-            </p>
+    <div className="signin-container">
+      <div className="signin-card">
+        <h2 className="signin-heading">Sign In</h2>
+        <form className="signin-form" onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={errors.email ? "error-input" : ""}
+              autoComplete="username"
+            />
+            {errors.email && <span className="error-message">{errors.email}</span>}
+          </div>              <div className="input-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={errors.password ? "error-input" : ""}
+              autoComplete="current-password"
+            />                {errors.password && <span className="error-message">{errors.password}</span>}
           </div>
+          <div className="forgot-password-link">
+            <Link to="/forgotpassword">Forgot Password?</Link>
+          </div><div className="input-group">
+            <label>Sign in as</label>
+            <div className="role-selection">
+              <label className="role-option">
+                <input
+                  type="radio"
+                  name="role"
+                  value="student"
+                  checked={formData.role === "student"}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                />
+                Student
+              </label>
+              <label className="role-option">
+                <input
+                  type="radio"
+                  name="role"
+                  value="receptionist"
+                  checked={formData.role === "receptionist"} onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                />
+                Receptionist
+              </label>
+            </div>
+          </div>
+          {errors.serverError && (
+            <div className="server-error-message">{errors.serverError}</div>
+          )}              <div className="input-group">
+            <button
+              type="submit"
+              className="signin-button"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing In..." : "Sign In"}
+            </button>
+          </div>
+        </form>            <div className="signin-links">
+          <p>Don't have an account? <Link to="/signup">Create Account</Link></p>
         </div>
       </div>
     </div>

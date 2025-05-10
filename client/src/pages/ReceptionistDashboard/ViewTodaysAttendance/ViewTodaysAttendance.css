@@ -1,0 +1,344 @@
+/* View Today's Attendance Styles */
+.todays-attendance-container {
+    width: 100%;
+    min-height: 100vh;
+    background-image: url("/public/assets/landingPage.jpg");
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.todays-attendance-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(8, 15, 30, 0.6);
+    z-index: 0;
+}
+
+.todays-attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background-color: rgba(13, 27, 42, 0.8);
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.todays-attendance-nav ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.todays-attendance-nav a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+.todays-attendance-content {
+    position: relative;
+    z-index: 1;
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 80px);
+}
+
+.todays-attendance-card {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 30px;
+    width: 95%;
+    max-width: 900px;
+    position: relative;
+}
+
+.back-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 30px;
+    height: 30px;
+    background-color: rgba(13, 27, 42, 0.8);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.card-title {
+    text-align: center;
+    color: #0d1b2a;
+    margin-bottom: 20px;
+    font-size: 28px;
+}
+
+.attendance-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.meal-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meal-selector label {
+    font-weight: bold;
+    color: #0d1b2a;
+}
+
+.meal-selector select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    font-size: 14px;
+}
+
+.export-button {
+    background-color: #0d1b2a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.export-button:hover:not(:disabled) {
+    background-color: #1b263b;
+}
+
+.export-button:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+.attendance-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.summary-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.summary-box.total {
+    background-color: rgba(52, 152, 219, 0.15);
+}
+
+.summary-box.present {
+    background-color: rgba(46, 204, 113, 0.15);
+}
+
+.summary-box.absent {
+    background-color: rgba(231, 76, 60, 0.15);
+}
+
+.summary-box.percentage {
+    background-color: rgba(155, 89, 182, 0.15);
+}
+
+.summary-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.summary-box.total .summary-value {
+    color: #2980b9;
+}
+
+.summary-box.present .summary-value {
+    color: #27ae60;
+}
+
+.summary-box.absent .summary-value {
+    color: #c0392b;
+}
+
+.summary-box.percentage .summary-value {
+    color: #8e44ad;
+}
+
+.summary-label {
+    font-size: 14px;
+    color: #333;
+}
+
+.loading-indicator,
+.error-message,
+.no-records {
+    text-align: center;
+    padding: 20px;
+    background-color: rgba(13, 27, 42, 0.05);
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.error-message {
+    color: #c0392b;
+}
+
+.attendance-table-container {
+    overflow-x: auto;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.attendance-table th,
+.attendance-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.attendance-table th {
+    background-color: #0d1b2a;
+    color: white;
+    font-weight: normal;
+}
+
+.attendance-table tr:nth-child(even) {
+    background-color: rgba(13, 27, 42, 0.05);
+}
+
+.present-row {
+    background-color: rgba(46, 204, 113, 0.05) !important;
+}
+
+.absent-row {
+    background-color: rgba(231, 76, 60, 0.05) !important;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.status-badge.present {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+}
+
+.status-badge.absent {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #c0392b;
+}
+
+.toggle-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.toggle-button.mark-absent {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #c0392b;
+}
+
+.toggle-button.mark-present {
+    background-color: rgba(46, 204, 113, 0.2);
+    color: #27ae60;
+}
+
+.toggle-button.mark-absent:hover {
+    background-color: rgba(231, 76, 60, 0.3);
+}
+
+.toggle-button.mark-present:hover {
+    background-color: rgba(46, 204, 113, 0.3);
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .todays-attendance-header {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .todays-attendance-nav ul {
+        margin-top: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .profile-icon {
+        margin-top: 15px;
+    }
+
+    .todays-attendance-card {
+        padding: 20px;
+        width: 95%;
+    }
+
+    .attendance-controls {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .export-button {
+        width: 100%;
+    }
+
+    .attendance-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .todays-attendance-content {
+        padding: 20px;
+    }
+
+    .todays-attendance-card {
+        padding: 15px;
+        width: 100%;
+    }
+
+    .card-title {
+        font-size: 24px;
+    }
+
+    .back-button {
+        top: 10px;
+        left: 10px;
+    }
+
+    .attendance-summary {
+        grid-template-columns: repeat(1, 1fr);
+    }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './Menu.css';
+import Navbar from '../../components/Navbar';
 
 export default function Menu() {
     // Weekly menu data
@@ -47,26 +48,9 @@ export default function Menu() {
             lunch: 'Beef Curry, Rice',
             dinner: 'Chicken Handi'
         }
-    ];
-
-    return (
+    ]; return (
         <div className="menu-container">
-            <header className="menu-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="menu-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
+            <Navbar />
 
             <div className="menu-content">
                 <div className="menu-card">

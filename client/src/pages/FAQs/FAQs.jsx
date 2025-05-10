@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './FAQs.css';
+import Navbar from '../../components/Navbar';
 
 export default function FAQs() {
     const faqsList = [
@@ -28,26 +29,9 @@ export default function FAQs() {
             question: "Who should I contact for any issues or complaints?",
             answer: "You can report to the mess management or leave feedback through the complaint system."
         }
-    ];
-
-    return (
+    ]; return (
         <div className="faqs-container">
-            <header className="faqs-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="faqs-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
+            <Navbar />
 
             <div className="faqs-content">
                 <div className="faqs-card">

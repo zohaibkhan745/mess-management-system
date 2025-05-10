@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Feedback.css';
+import Navbar from '../../components/Navbar';
 
 export default function Feedback() {
     const [email, setEmail] = useState('');
@@ -22,26 +23,9 @@ export default function Feedback() {
             setSubmitted(false);
         }, 3000);
     };
-
     return (
         <div className="feedback-container">
-            <header className="feedback-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="feedback-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
-
+            <Navbar />
             <div className="feedback-content">
                 <div className="feedback-card">
                     <Link to="/dashboard" className="back-button">

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './MessInOut.css';
+import Navbar from '../../components/Navbar';
 
 export default function MessInOut() {
     const [messStatus, setMessStatus] = useState(false); // false means "out", true means "in"
@@ -174,26 +175,9 @@ export default function MessInOut() {
     const calculateEstimatedBill = () => {
         const perDayRate = 300; // Example: 300 rupees per day
         return countMessInDays() * perDayRate;
-    };
-
-    return (
+    }; return (
         <div className="mess-inout-container">
-            <header className="mess-inout-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="mess-inout-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
+            <Navbar />
 
             <div className="mess-inout-content">
                 <div className="mess-inout-card">

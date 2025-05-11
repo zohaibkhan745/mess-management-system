@@ -232,6 +232,32 @@ app.post("/complete-profile", async (req, res) => {
   }
 });
 
+// Get all rules
+app.get("/api/rules", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT rule_id, title, description, priority FROM rules ORDER BY priority ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching rules:", err);
+    res.status(500).json({ message: "Failed to fetch rules" });
+  }
+});
+
+// Get all FAQs
+app.get("/api/faqs", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT faq_id, question, answer, is_featured FROM faqs ORDER BY is_featured DESC, faq_id ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching FAQs:", err);
+    res.status(500).json({ message: "Failed to fetch FAQs" });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

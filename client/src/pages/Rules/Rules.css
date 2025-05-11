@@ -169,3 +169,20 @@
         font-size: 14px;
     }
 }
+
+.loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 18px;
+    color: #666;
+}
+
+.error-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+    color: #e53935;
+    background-color: #ffebee;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}

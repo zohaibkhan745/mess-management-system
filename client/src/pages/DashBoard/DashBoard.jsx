@@ -1,24 +1,61 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './DashBoard.css';
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import "./DashBoard.css";
 
 export default function Dashboard() {
+  const [user, setUser] = useState({ name: "" });
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const userData = localStorage.getItem("userData");
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+    } else {
+      // Redirect to login if no user data found
+      navigate("/signin");
+    }
+  }, [navigate]);
+
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userData");
+
+    // Redirect to landing page
+    navigate("/");
+  };
+
   return (
     <div className="dashboard-container">
       <header className="dashboard-header">
         <div className="logo">
-          <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
+          <img
+            src={process.env.PUBLIC_URL + "/assets/logo-pic.png"}
+            alt="Logo"
+            className="logo-img"
+          />
           <span>Giki Mess Management System</span>
         </div>
         <nav className="dashboard-nav">
           <ul>
-            <li><a href="#about">about</a></li>
-            <li><a href="#pricing">pricing</a></li>
-            <li><a href="#contact">contact</a></li>
+            <li>
+              <a href="#about">about</a>
+            </li>
+            <li>
+              <a href="#pricing">pricing</a>
+            </li>
+            <li>
+              <a href="#contact">contact</a>
+            </li>
           </ul>
         </nav>
-        <div className="profile-icon">
-          <div className="avatar">A</div>
+        <div className="profile-section">
+          <div className="avatar">{user?.name?.[0] || "A"}</div>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
         </div>
       </header>
 
@@ -56,7 +93,11 @@ export default function Dashboard() {
 
           <Link to="/feedback" className="menu-item">
             <div className="menu-content">
-              <h2>Complaints/<br />Feedbacks</h2>
+              <h2>
+                Complaints/
+                <br />
+                Feedbacks
+              </h2>
             </div>
           </Link>
         </div>

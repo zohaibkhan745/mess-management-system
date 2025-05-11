@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './MessInOut.css';
 
 export default function MessInOut() {
@@ -7,64 +7,159 @@ export default function MessInOut() {
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [daysStatus, setDaysStatus] = useState({});
+    const [userData, setUserData] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [summary, setSummary] = useState({ daysIn: 0, estimatedBill: 0 });
+    const [isRestricted, setIsRestricted] = useState(false);
+    
+    const navigate = useNavigate();
 
     // Get today's date
     const today = new Date();
     const todayDate = today.getDate();
     const todayMonth = today.getMonth();
     const todayYear = today.getFullYear();
+    const todayFormatted = today.toISOString().split('T')[0]; // YYYY-MM-DD format
 
     // Days of the week
     const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-    // Load initial data (in a real app this would come from an API)
     useEffect(() => {
-        // This is dummy data - in a real app, you'd fetch this from your backend
-        const dummyData = generateInitialDummyData(currentMonth, currentYear);
-        setDaysStatus(dummyData);
-    }, [currentMonth, currentYear]);
+        // Check if the current time is in restricted hours (10 AM to 12 PM)
+        const currentHour = new Date().getHours();
+        if (currentHour >= 10 && currentHour < 12) {
+            setIsRestricted(true);
+        } else {
+            setIsRestricted(false);
+        }
 
-    // Update only today's status when mess status changes
-    useEffect(() => {
-        // Only update if we're viewing the current month
-        if (currentMonth === todayMonth && currentYear === todayYear) {
-            setDaysStatus(prevStatus => ({
-                ...prevStatus,
-                [todayDate]: messStatus // Update only today's date based on mess status
+        // Check for user data in local storage
+        const storedUserData = localStorage.getItem('userData');
+        if (!storedUserData) {
+            navigate('/signin');
+            return;
+        }
+
+        const user = JSON.parse(storedUserData);
+        setUserData(user);
+        
+        // Fetch attendance data for the current month
+        fetchAttendanceData(user.regNo, currentMonth + 1, currentYear);
+        fetchAttendanceSummary(user.regNo, currentMonth + 1, currentYear);
+    }, [navigate, currentMonth, currentYear]);
+
+    const fetchAttendanceData = async (regNo, month, year) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://localhost:4000/api/attendance/${regNo}?month=${month}&year=${year}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch attendance data');
+            }
+            
+            const data = await response.json();
+            
+            // Convert to the format our component uses
+            const statusMap = {};
+            const daysInMonth = getDaysInMonth(month - 1, year);
+            
+            // Initialize all days to null (undecided)
+            for (let i = 1; i <= daysInMonth; i++) {
+                statusMap[i] = null;
+            }
+            
+            // Update with actual data
+            data.forEach(record => {
+                const day = new Date(record.date).getDate();
+                statusMap[day] = record.status === 'in';
+            });
+            
+            setDaysStatus(statusMap);
+            
+            // Set today's status if available
+            const todayRecord = data.find(record => record.date === todayFormatted);
+            if (todayRecord) {
+                setMessStatus(todayRecord.status === 'in');
+            }
+            
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching attendance:', error);
+            setError('Failed to load attendance data. Please try again.');
+            setLoading(false);
+        }
+    };
+
+    const fetchAttendanceSummary = async (regNo, month, year) => {
+        try {
+            const response = await fetch(`http://localhost:4000/api/attendance/summary/${regNo}?month=${month}&year=${year}`);
+            if (!response.ok) {
+                throw new Error('Failed to fetch attendance summary');
+            }
+            
+            const data = await response.json();
+            setSummary(data);
+        } catch (error) {
+            console.error('Error fetching attendance summary:', error);
+        }
+    };
+
+    // Toggle the mess status for today
+    const toggleMessStatus = async () => {
+        // Check if time is restricted
+        if (isRestricted) {
+            setError('Attendance changes are not allowed between 10 AM and 12 PM');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        const newStatus = !messStatus;
+        setMessStatus(newStatus);
+        
+        try {
+            const response = await fetch('http://localhost:4000/api/attendance', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify({
+                    regNo: userData.regNo,
+                    date: todayFormatted,
+                    status: newStatus ? 'in' : 'out'
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update attendance');
+            }
+            
+            // Update days status for today
+            setDaysStatus(prev => ({
+                ...prev,
+                [todayDate]: newStatus
             }));
+            
+            // Show success message
+            setSuccessMessage(`Status updated to ${newStatus ? 'Mess In' : 'Mess Out'}`);
+            setTimeout(() => setSuccessMessage(''), 3000);
+            
+            // Refresh summary data
+            fetchAttendanceSummary(userData.regNo, currentMonth + 1, currentYear);
+        } catch (error) {
+            console.error('Error updating attendance:', error);
+            setError(error.message || 'Failed to update attendance');
+            setTimeout(() => setError(null), 3000);
+            
+            // Revert the UI change if there was an error
+            setMessStatus(!newStatus);
         }
-    }, [messStatus, currentMonth, currentYear, todayDate, todayMonth, todayYear]);
-
-    // Generate initial dummy data with past days randomly marked and today/future undecided
-    const generateInitialDummyData = (month, year) => {
-        const result = {};
-        const daysInMonth = getDaysInMonth(month, year);
-
-        for (let i = 1; i <= daysInMonth; i++) {
-            // If it's a past date (in current month), randomly set status
-            if ((month === todayMonth && year === todayYear && i < todayDate) ||
-                (month < todayMonth && year === todayYear) ||
-                (year < todayYear)) {
-                result[i] = Math.random() > 0.5;
-            }
-            // For today, set based on current mess status
-            else if (month === todayMonth && year === todayYear && i === todayDate) {
-                result[i] = messStatus;
-            }
-            // For future dates, set as undecided (null)
-            else {
-                result[i] = null;
-            }
-        }
-        return result;
     };
 
-    // Toggle the overall mess status (affects only today)
-    const toggleMessStatus = () => {
-        setMessStatus(!messStatus);
-    };
-
-    // Get the number of days in the current month
+    // Get the number of days in the month
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
     };
@@ -81,6 +176,26 @@ export default function MessInOut() {
     // Get the first day of the month (0 = Sunday, 1 = Monday, etc.)
     const getFirstDayOfMonth = (month, year) => {
         return new Date(year, month, 1).getDay();
+    };
+
+    // Navigation to previous month
+    const goToPreviousMonth = () => {
+        if (currentMonth === 0) {
+            setCurrentMonth(11);
+            setCurrentYear(currentYear - 1);
+        } else {
+            setCurrentMonth(currentMonth - 1);
+        }
+    };
+
+    // Navigation to next month
+    const goToNextMonth = () => {
+        if (currentMonth === 11) {
+            setCurrentMonth(0);
+            setCurrentYear(currentYear + 1);
+        } else {
+            setCurrentMonth(currentMonth + 1);
+        }
     };
 
     // Render the calendar header (days of the week)
@@ -136,46 +251,6 @@ export default function MessInOut() {
         return calendarDays;
     };
 
-    // Navigation to previous month
-    const goToPreviousMonth = () => {
-        if (currentMonth === 0) {
-            setCurrentMonth(11);
-            setCurrentYear(currentYear - 1);
-        } else {
-            setCurrentMonth(currentMonth - 1);
-        }
-    };
-
-    // Navigation to next month
-    const goToNextMonth = () => {
-        if (currentMonth === 11) {
-            setCurrentMonth(0);
-            setCurrentYear(currentYear + 1);
-        } else {
-            setCurrentMonth(currentMonth + 1);
-        }
-    };
-
-    // Count the number of mess-in days for the current month
-    const countMessInDays = () => {
-        let count = 0;
-        const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            if (daysStatus[day] === true) {
-                count++;
-            }
-        }
-
-        return count;
-    };
-
-    // Calculate the estimated mess bill (example calculation)
-    const calculateEstimatedBill = () => {
-        const perDayRate = 300; // Example: 300 rupees per day
-        return countMessInDays() * perDayRate;
-    };
-
     return (
         <div className="mess-inout-container">
             <header className="mess-inout-header">
@@ -191,7 +266,7 @@ export default function MessInOut() {
                     </ul>
                 </nav>
                 <div className="profile-icon">
-                    <div className="avatar">A</div>
+                    <div className="avatar">{userData?.name?.[0] || 'A'}</div>
                 </div>
             </header>
 
@@ -203,58 +278,73 @@ export default function MessInOut() {
 
                     <h1 className="card-title">Mess IN/OUT</h1>
 
-                    <div className="calendar-container">
-                        <div className="calendar-header">
-                            <button className="month-nav" onClick={goToPreviousMonth}>←</button>
-                            <h2>{getMonthName(currentMonth)} {currentYear}</h2>
-                            <button className="month-nav" onClick={goToNextMonth}>→</button>
+                    {error && <div className="error-message">{error}</div>}
+                    {successMessage && <div className="success-message">{successMessage}</div>}
+                    {isRestricted && (
+                        <div className="restricted-notice">
+                            Note: Attendance changes are not allowed between 10 AM and 12 PM
                         </div>
+                    )}
 
-                        <div className="weekday-header">
-                            {renderCalendarHeader()}
-                        </div>
+                    {loading ? (
+                        <div className="loading">Loading attendance data...</div>
+                    ) : (
+                        <>
+                            <div className="calendar-container">
+                                <div className="calendar-header">
+                                    <button className="month-nav" onClick={goToPreviousMonth}>←</button>
+                                    <h2>{getMonthName(currentMonth)} {currentYear}</h2>
+                                    <button className="month-nav" onClick={goToNextMonth}>→</button>
+                                </div>
 
-                        <div className="calendar-grid">
-                            {renderCalendar()}
-                        </div>
+                                <div className="weekday-header">
+                                    {renderCalendarHeader()}
+                                </div>
 
-                        <div className="calendar-legend">
-                            <div className="legend-item">
-                                <span className="day-status in">✓</span>
-                                <span>Mess In</span>
+                                <div className="calendar-grid">
+                                    {renderCalendar()}
+                                </div>
+
+                                <div className="calendar-legend">
+                                    <div className="legend-item">
+                                        <span className="day-status in">✓</span>
+                                        <span>Mess In</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="day-status out">✗</span>
+                                        <span>Mess Out</span>
+                                    </div>
+                                    <div className="legend-item">
+                                        <span className="day-status undecided">?</span>
+                                        <span>Not Yet Decided</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="legend-item">
-                                <span className="day-status out">✗</span>
-                                <span>Mess Out</span>
-                            </div>
-                            <div className="legend-item">
-                                <span className="day-status undecided">?</span>
-                                <span>Not Yet Decided</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="mess-toggle-container">
-                        <span className="mess-status-label">
-                            {messStatus ? 'You are currently in mess' : 'You are currently out of mess'}
-                        </span>
-                        <div className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                id="mess-toggle"
-                                checked={messStatus}
-                                onChange={toggleMessStatus}
-                            />
-                            <label htmlFor="mess-toggle" className="toggle-label"></label>
-                        </div>
-                        <span className="mess-status-text">
-                            Toggle to change today's status
-                        </span>
-                    </div>
+                            <div className="mess-toggle-container">
+                                <span className="mess-status-label">
+                                    {messStatus ? 'You are currently in mess' : 'You are currently out of mess'}
+                                </span>
+                                <div className="toggle-switch">
+                                    <input
+                                        type="checkbox"
+                                        id="mess-toggle"
+                                        checked={messStatus}
+                                        onChange={toggleMessStatus}
+                                        disabled={isRestricted}
+                                    />
+                                    <label htmlFor="mess-toggle" className={`toggle-label ${isRestricted ? 'disabled' : ''}`}></label>
+                                </div>
+                                <span className="mess-status-text">
+                                    Toggle to change today's status
+                                </span>
+                            </div>
 
-                    <div className="mess-summary">
-                        <p>Mess In Days: <span className="count-number">{countMessInDays()}</span> | Estimated Bill: {calculateEstimatedBill()} Rupees</p>
-                    </div>
+                            <div className="mess-summary">
+                                <p>Mess In Days: <span className="count-number">{summary.daysIn}</span> | Estimated Bill: {summary.estimatedBill} Rupees</p>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,79 +1,96 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './Rules.css';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import "./Rules.css";
 
 export default function Rules() {
-    const messRules = [
-        {
-            title: "Meal Booking:",
-            description: "If you want to eat in the mess for lunch or dinner, you must confirm before 10:00 AM."
-        },
-        {
-            title: "Cancellation:",
-            description: "If you booked a meal but don't show up, you will still be charged for it."
-        },
-        {
-            title: "Mess Timings:",
-            description: "Meals will be served at fixed timings. Latecomers will not be served."
-        },
-        {
-            title: "Cleanliness:",
-            description: "After eating, put your plates and spoons back in their place."
-        },
-        {
-            title: "Food Policy:",
-            description: "No one is allowed to take food outside from the mess."
-        },
-        {
-            title: "Respect Staff:",
-            description: "Be polite to the mess staff. Misbehavior will not be tolerated."
-        },
-        {
-            title: "Special Requests:",
-            description: "If you need a special meal (e.g., diet meal), inform the mess management in advance."
+  const [messRules, setMessRules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchRules = async () => {
+      try {
+        const response = await fetch("http://localhost:4000/api/rules");
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
         }
-    ];
+        const data = await response.json();
+        setMessRules(data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching rules:", error);
+        setError("Failed to load mess rules. Please try again later.");
+        setLoading(false);
+      }
+    };
 
-    return (
-        <div className="rules-container">
-            <header className="rules-header">
-                <div className="logo">
-                    <img src={process.env.PUBLIC_URL + '/assets/logo-pic.png'} alt="Logo" className="logo-img" />
-                    <span>Giki Mess Management System</span>
-                </div>
-                <nav className="rules-nav">
-                    <ul>
-                        <li><a href="#about">about</a></li>
-                        <li><a href="#pricing">pricing</a></li>
-                        <li><a href="#contact">contact</a></li>
-                    </ul>
-                </nav>
-                <div className="profile-icon">
-                    <div className="avatar">A</div>
-                </div>
-            </header>
+    fetchRules();
+  }, []);
 
-            <div className="rules-content">
-                <div className="rules-card">
-                    <Link to="/dashboard" className="back-button">
-                        <span>←</span>
-                    </Link>
-
-                    <h1 className="card-title">Mess Rules & Guidelines</h1>
-
-                    <div className="rules-list">
-                        {messRules.map((rule, index) => (
-                            <div key={index} className="rule-item">
-                                <p>
-                                    <span className="rule-number">{index + 1}. </span>
-                                    <span className="rule-title">{rule.title} </span>
-                                    {rule.description}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="rules-container">
+      <header className="rules-header">
+        <div className="logo">
+          <img
+            src={process.env.PUBLIC_URL + "/assets/logo-pic.png"}
+            alt="Logo"
+            className="logo-img"
+          />
+          <span>Giki Mess Management System</span>
         </div>
-    );
+        <nav className="rules-nav">
+          <ul>
+            <li>
+              <a href="#about">about</a>
+            </li>
+            <li>
+              <a href="#pricing">pricing</a>
+            </li>
+            <li>
+              <a href="#contact">contact</a>
+            </li>
+          </ul>
+        </nav>
+        <div className="profile-icon">
+          <div className="avatar">A</div>
+        </div>
+      </header>
+
+      <div className="rules-content">
+        <div className="rules-card">
+          <Link to="/dashboard" className="back-button">
+            <span>←</span>
+          </Link>
+
+          <h1 className="card-title">Mess Rules & Guidelines</h1>
+
+          {loading ? (
+            <div className="loading">
+              <i className="fas fa-spinner fa-spin"></i> Loading rules...
+            </div>
+          ) : error ? (
+            <div className="error-message">
+              <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+          ) : messRules.length === 0 ? (
+            <div className="no-rules-message">
+              No rules have been added yet.
+            </div>
+          ) : (
+            <div className="rules-list">
+              {messRules.map((rule, index) => (
+                <div key={rule.rule_id || index} className="rule-item">
+                  <p>
+                    <span className="rule-number">{index + 1}. </span>
+                    <span className="rule-title">{rule.title} </span>
+                    {rule.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }

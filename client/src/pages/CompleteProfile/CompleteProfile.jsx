@@ -12,6 +12,34 @@ const CompleteProfile = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   
+  // Predefined lists of departments and hostels
+  const departments = [
+    "Software Engineering",
+    "Computer Science",
+    "Electrical Engineering",
+    "Mechanical Engineering",
+    "Materials Engineering",
+    "Engineering Sciences",
+    "Management Sciences",
+    "Artificial Intelligence"
+  ];
+  
+  const hostels = [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "H7",
+    "H8",
+    "H9",
+    "H10",
+    "H11",
+    "H12",
+    "Hostel 9"
+  ];
+  
   useEffect(() => {
     // Check if user is logged in
     const token = localStorage.getItem("authToken");
@@ -24,10 +52,10 @@ const CompleteProfile = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.degree.trim()) {
-      newErrors.degree = "Degree is required";
+    if (!formData.degree) {
+      newErrors.degree = "Department is required";
     }
-    if (!formData.hostelName.trim()) {
+    if (!formData.hostelName) {
       newErrors.hostelName = "Hostel name is required";
     }
     setErrors(newErrors);
@@ -56,6 +84,12 @@ const CompleteProfile = () => {
         return;
       }
 
+      console.log("Sending profile completion data:", {
+        regNo,
+        degree: formData.degree,
+        hostelName: formData.hostelName
+      });
+
       const response = await fetch("http://localhost:4000/complete-profile", {
         method: "POST",
         headers: { 
@@ -76,14 +110,20 @@ const CompleteProfile = () => {
         localStorage.setItem("userData", JSON.stringify({
           ...userData,
           degree: formData.degree,
+          hostelName: formData.hostelName,
           profileComplete: true
         }));
         
         navigate("/dashboard");
       } else {
-        setErrors({ serverError: data.message || "Failed to complete profile" });
+        // Show more detailed error info
+        console.error("Profile completion error:", data);
+        setErrors({ 
+          serverError: data.message || "Failed to complete profile" 
+        });
       }
     } catch (error) {
+      console.error("Network error:", error);
       setErrors({ serverError: "Network error. Please try again." });
     } finally {
       setIsSubmitting(false);
@@ -98,28 +138,38 @@ const CompleteProfile = () => {
         
         <form onSubmit={handleSubmit}>
           <div className="input-group">
-            <label htmlFor="degree">Degree Program</label>
-            <input
+            <label htmlFor="degree">Department</label>
+            <select
               id="degree"
-              type="text"
               value={formData.degree}
               onChange={handleChange}
-              placeholder="e.g., BS Computer Science"
               className={errors.degree ? "error-input" : ""}
-            />
+            >
+              <option value="">Select your department</option>
+              {departments.map((dept, index) => (
+                <option key={index} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
             {errors.degree && <span className="error-message">{errors.degree}</span>}
           </div>
 
           <div className="input-group">
             <label htmlFor="hostelName">Hostel Name</label>
-            <input
+            <select
               id="hostelName"
-              type="text"
               value={formData.hostelName}
               onChange={handleChange}
-              placeholder="e.g., Hostel 9"
               className={errors.hostelName ? "error-input" : ""}
-            />
+            >
+              <option value="">Select your hostel</option>
+              {hostels.map((hostel, index) => (
+                <option key={index} value={hostel}>
+                  {hostel}
+                </option>
+              ))}
+            </select>
             {errors.hostelName && <span className="error-message">{errors.hostelName}</span>}
           </div>
 

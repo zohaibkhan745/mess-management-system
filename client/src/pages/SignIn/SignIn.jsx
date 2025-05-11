@@ -47,8 +47,15 @@ const SignIn = () => {
       if (response.ok) {
         if (data.token) {
           localStorage.setItem("authToken", data.token);
+          localStorage.setItem("userData", JSON.stringify(data.user));
         }
-        navigate("/dashboard"); // Changed from "/testing" to "/dashboard"
+        
+        // Check if profile is complete
+        if (!data.user.profileComplete) {
+          navigate("/complete-profile");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         setErrors({ ...errors, serverError: data.message || "Invalid email or password" });
       }

@@ -143,6 +143,95 @@ app.get("/menu", async (req, res) => {
   }
 });
 
+// Endpoint to complete user profile
+app.post("/complete-profile", async (req, res) => {
+  console.log("Complete profile request received:", req.body);
+  const { regNo, degree, hostelName } = req.body;
+  
+  if (!regNo || !degree || !hostelName) {
+    return res.status(400).json({ message: "Registration number, degree, and hostel name are required." });
+  }
+
+  try {
+    // First, check if the department exists, if not create it
+    let departmentId;
+    const deptCheck = await pool.query(
+      "SELECT department_id FROM degrees WHERE department_name = $1",
+      [degree]
+    );
+    
+    if (deptCheck.rowCount === 0) {
+      // Department doesn't exist, create it
+      const newDeptResult = await pool.query(
+        "INSERT INTO degrees (department_name) VALUES ($1) RETURNING department_id",
+        [degree]
+      );
+      departmentId = newDeptResult.rows[0].department_id;
+      console.log("Created new department:", degree, "with ID:", departmentId);
+    } else {
+      departmentId = deptCheck.rows[0].department_id;
+      console.log("Found existing department:", degree, "with ID:", departmentId);
+    }
+    
+    // Next, check if the hostel exists, if not create it
+    let hostelId;
+    const hostelCheck = await pool.query(
+      "SELECT hostel_id FROM hostels WHERE hostel_name = $1", // Note: using lowercase table name
+      [hostelName]
+    );
+    
+    if (hostelCheck.rowCount === 0) {
+      // Hostel doesn't exist, create it
+      const newHostelResult = await pool.query(
+        "INSERT INTO hostels (hostel_name) VALUES ($1) RETURNING hostel_id", // Note: using lowercase table name
+        [hostelName]
+      );
+      hostelId = newHostelResult.rows[0].hostel_id;
+      console.log("Created new hostel:", hostelName, "with ID:", hostelId);
+    } else {
+      hostelId = hostelCheck.rows[0].hostel_id;
+      console.log("Found existing hostel:", hostelName, "with ID:", hostelId);
+    }
+
+    // Update the student's profile
+    console.log("Updating student profile with values:", {
+      departmentId,
+      hostelId,
+      regNo
+    });
+    
+    const updateResult = await pool.query(
+      "UPDATE students SET degree = $1, hostel_id = $2, profile_complete = TRUE WHERE reg_no = $3 RETURNING *", // Note: using lowercase table name
+      [departmentId, hostelId, regNo]
+    );
+
+    console.log("Update result rows:", updateResult.rowCount);
+    if (updateResult.rowCount === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const updatedUser = updateResult.rows[0];
+    
+    return res.status(200).json({
+      message: "Profile completed successfully",
+      user: {
+        regNo: updatedUser.reg_no,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        degree,
+        hostelName,
+        profileComplete: true
+      }
+    });
+  } catch (err) {
+    console.error("Error completing profile:", err);
+    res.status(500).json({ 
+      message: "Internal server error. Please try again.",
+      error: err.message
+    });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

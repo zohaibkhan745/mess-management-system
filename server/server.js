@@ -33,12 +33,9 @@ app.post("/adduser", async (req, res) => {
       [email, regNumber]
     );
     if (userCheck.rowCount > 0) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "User with this email or registration number already exists.",
-        });
+      return res.status(400).json({
+        message: "User with this email or registration number already exists.",
+      });
     }
 
     // Insert new user into Students table
@@ -245,11 +242,9 @@ app.post("/complete-profile", async (req, res) => {
   const { regNo, degree, hostelName } = req.body;
 
   if (!regNo || !degree || !hostelName) {
-    return res
-      .status(400)
-      .json({
-        message: "Registration number, degree, and hostel name are required.",
-      });
+    return res.status(400).json({
+      message: "Registration number, degree, and hostel name are required.",
+    });
   }
 
   try {
@@ -350,6 +345,97 @@ app.get("/api/rules", async (req, res) => {
   }
 });
 
+// CRUD operations for Rules
+// Add new rule
+app.post("/api/rules", async (req, res) => {
+  const { title, description, priority } = req.body;
+
+  if (!title || !description) {
+    return res
+      .status(400)
+      .json({ message: "Title and description are required" });
+  }
+
+  try {
+    // If priority is not provided, set it to the highest existing priority + 1
+    let rulePriority = priority;
+    if (!rulePriority) {
+      const maxPriorityResult = await pool.query(
+        "SELECT MAX(priority) FROM rules"
+      );
+      rulePriority = (maxPriorityResult.rows[0].max || 0) + 1;
+    }
+
+    const result = await pool.query(
+      "INSERT INTO rules (title, description, priority) VALUES ($1, $2, $3) RETURNING *",
+      [title, description, rulePriority]
+    );
+
+    res.status(201).json({
+      message: "Rule added successfully",
+      rule: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error adding rule:", err);
+    res.status(500).json({ message: "Failed to add rule" });
+  }
+});
+
+// Update existing rule
+app.put("/api/rules/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, description, priority } = req.body;
+
+  if (!title || !description) {
+    return res
+      .status(400)
+      .json({ message: "Title and description are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE rules SET title = $1, description = $2, priority = $3 WHERE rule_id = $4 RETURNING *",
+      [title, description, priority, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Rule not found" });
+    }
+
+    res.json({
+      message: "Rule updated successfully",
+      rule: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error updating rule:", err);
+    res.status(500).json({ message: "Failed to update rule" });
+  }
+});
+
+// Delete rule
+app.delete("/api/rules/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM rules WHERE rule_id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Rule not found" });
+    }
+
+    res.json({
+      message: "Rule deleted successfully",
+      rule: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error deleting rule:", err);
+    res.status(500).json({ message: "Failed to delete rule" });
+  }
+});
+
 // Get all FAQs
 app.get("/api/faqs", async (req, res) => {
   try {
@@ -360,6 +446,88 @@ app.get("/api/faqs", async (req, res) => {
   } catch (err) {
     console.error("Error fetching FAQs:", err);
     res.status(500).json({ message: "Failed to fetch FAQs" });
+  }
+});
+
+// CRUD operations for FAQs
+// Add new FAQ
+app.post("/api/faqs", async (req, res) => {
+  const { question, answer, is_featured } = req.body;
+
+  if (!question || !answer) {
+    return res
+      .status(400)
+      .json({ message: "Question and answer are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "INSERT INTO faqs (question, answer, is_featured) VALUES ($1, $2, $3) RETURNING *",
+      [question, answer, is_featured || false]
+    );
+
+    res.status(201).json({
+      message: "FAQ added successfully",
+      faq: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error adding FAQ:", err);
+    res.status(500).json({ message: "Failed to add FAQ" });
+  }
+});
+
+// Update existing FAQ
+app.put("/api/faqs/:id", async (req, res) => {
+  const { id } = req.params;
+  const { question, answer, is_featured } = req.body;
+
+  if (!question || !answer) {
+    return res
+      .status(400)
+      .json({ message: "Question and answer are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE faqs SET question = $1, answer = $2, is_featured = $3 WHERE faq_id = $4 RETURNING *",
+      [question, answer, is_featured || false, id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "FAQ not found" });
+    }
+
+    res.json({
+      message: "FAQ updated successfully",
+      faq: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error updating FAQ:", err);
+    res.status(500).json({ message: "Failed to update FAQ" });
+  }
+});
+
+// Delete FAQ
+app.delete("/api/faqs/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "DELETE FROM faqs WHERE faq_id = $1 RETURNING *",
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "FAQ not found" });
+    }
+
+    res.json({
+      message: "FAQ deleted successfully",
+      faq: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error deleting FAQ:", err);
+    res.status(500).json({ message: "Failed to delete FAQ" });
   }
 });
 

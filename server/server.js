@@ -761,6 +761,226 @@ app.get("/api/bill/history/:regNo", async (req, res) => {
   }
 });
 
+// Get all students with their degree and hostel information
+app.get("/api/students", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        s.reg_no, 
+        s.name, 
+        s.email, 
+        s.profile_complete,
+        d.department_name,
+        h.hostel_name
+      FROM 
+        students s
+      LEFT JOIN 
+        degrees d ON s.degree = d.department_id
+      LEFT JOIN 
+        hostels h ON s.hostel_id = h.hostel_id
+      ORDER BY 
+        s.reg_no ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching students:", err);
+    res.status(500).json({ message: "Failed to fetch students" });
+  }
+});
+
+// Get total count of students
+app.get("/api/students/count", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT COUNT(*) FROM students");
+    res.json({ count: parseInt(result.rows[0].count) });
+  } catch (err) {
+    console.error("Error counting students:", err);
+    res.status(500).json({ message: "Failed to count students" });
+  }
+});
+
+// Add new student
+app.post("/api/students", async (req, res) => {
+  const { reg_no, name, email, password, degree, hostel_name } = req.body;
+
+  if (!reg_no || !name || !email || !password) {
+    return res
+      .status(400)
+      .json({
+        message: "Registration number, name, email, and password are required",
+      });
+  }
+
+  try {
+    // Check if student already exists
+    const studentCheck = await pool.query(
+      "SELECT * FROM students WHERE reg_no = $1 OR email = $2",
+      [reg_no, email]
+    );
+
+    if (studentCheck.rowCount > 0) {
+      return res
+        .status(400)
+        .json({
+          message:
+            "A student with this registration number or email already exists",
+        });
+    }
+
+    // Get or create degree ID
+    let degreeId = null;
+    if (degree) {
+      const degreeResult = await pool.query(
+        "SELECT department_id FROM degrees WHERE department_name = $1",
+        [degree]
+      );
+
+      if (degreeResult.rowCount > 0) {
+        degreeId = degreeResult.rows[0].department_id;
+      } else {
+        const newDegreeResult = await pool.query(
+          "INSERT INTO degrees (department_name) VALUES ($1) RETURNING department_id",
+          [degree]
+        );
+        degreeId = newDegreeResult.rows[0].department_id;
+      }
+    }
+
+    // Get or create hostel ID
+    let hostelId = null;
+    if (hostel_name) {
+      const hostelResult = await pool.query(
+        "SELECT hostel_id FROM hostels WHERE hostel_name = $1",
+        [hostel_name]
+      );
+
+      if (hostelResult.rowCount > 0) {
+        hostelId = hostelResult.rows[0].hostel_id;
+      } else {
+        const newHostelResult = await pool.query(
+          "INSERT INTO hostels (hostel_name) VALUES ($1) RETURNING hostel_id",
+          [hostel_name]
+        );
+        hostelId = newHostelResult.rows[0].hostel_id;
+      }
+    }
+
+    // Insert new student
+    const result = await pool.query(
+      `INSERT INTO students 
+        (reg_no, name, email, password, degree, hostel_id, profile_complete) 
+       VALUES 
+        ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING *`,
+      [reg_no, name, email, password, degreeId, hostelId, true]
+    );
+
+    res.status(201).json({
+      message: "Student added successfully",
+      student: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error adding student:", err);
+    res.status(500).json({ message: "Failed to add student" });
+  }
+});
+
+// Delete student
+app.delete("/api/students/:regNo", async (req, res) => {
+  const { regNo } = req.params;
+
+  try {
+    // First check if the student exists
+    const checkResult = await pool.query(
+      "SELECT * FROM students WHERE reg_no = $1",
+      [regNo]
+    );
+
+    if (checkResult.rowCount === 0) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Delete related records first (to maintain referential integrity)
+    await pool.query("DELETE FROM attendance WHERE reg_no = $1", [regNo]);
+
+    // Then delete the student
+    const result = await pool.query(
+      "DELETE FROM students WHERE reg_no = $1 RETURNING *",
+      [regNo]
+    );
+
+    res.json({
+      message: "Student deleted successfully",
+      student: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error deleting student:", err);
+    res.status(500).json({ message: "Failed to delete student" });
+  }
+});
+
+// Get all degrees
+app.get("/api/degrees", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM degrees ORDER BY department_name ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching degrees:", err);
+    res.status(500).json({ message: "Failed to fetch degrees" });
+  }
+});
+
+// Get all hostels
+app.get("/api/hostels", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM hostels ORDER BY hostel_name ASC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching hostels:", err);
+    res.status(500).json({ message: "Failed to fetch hostels" });
+  }
+});
+
+// Get daily attendance with student details
+app.get("/api/attendance/daily", async (req, res) => {
+  const { date } = req.query;
+
+  if (!date) {
+    return res.status(400).json({ message: "Date parameter is required" });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT 
+        s.reg_no,
+        s.name,
+        h.hostel_name,
+        COALESCE(a.status, 'out') as status
+      FROM 
+        students s
+      LEFT JOIN 
+        hostels h ON s.hostel_id = h.hostel_id
+      LEFT JOIN 
+        attendance a ON s.reg_no = a.reg_no AND a.date = $1
+      ORDER BY 
+        s.reg_no ASC
+    `,
+      [date]
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching daily attendance:", err);
+    res.status(500).json({ message: "Failed to fetch attendance data" });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

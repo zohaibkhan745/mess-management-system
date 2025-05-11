@@ -258,6 +258,227 @@ app.get("/api/faqs", async (req, res) => {
   }
 });
 
+// Get attendance for a specific student
+app.get("/api/attendance/:regNo", async (req, res) => {
+  const { regNo } = req.params;
+  const { month, year } = req.query;
+  
+  try {
+    let query = "SELECT * FROM attendance WHERE reg_no = $1";
+    const params = [regNo];
+    
+    if (month && year) {
+      // Filter by specific month and year
+      query += " AND EXTRACT(MONTH FROM date) = $2 AND EXTRACT(YEAR FROM date) = $3";
+      params.push(month, year);
+    }
+    
+    query += " ORDER BY date DESC";
+    
+    const result = await pool.query(query, params);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching attendance:", err);
+    res.status(500).json({ message: "Failed to fetch attendance records" });
+  }
+});
+
+// Set/update attendance status for a student
+app.post("/api/attendance", async (req, res) => {
+  const { regNo, date, status } = req.body;
+  
+  // Check if the time is between 10 AM and 12 PM (restricted period)
+  const currentTime = new Date();
+  const currentHour = currentTime.getHours();
+  
+  if (currentHour >= 10 && currentHour < 12) {
+    return res.status(403).json({ 
+      message: "Attendance changes are not allowed between 10 AM and 12 PM" 
+    });
+  }
+  
+  try {
+    // Check if a record already exists for this student and date
+    const checkResult = await pool.query(
+      "SELECT * FROM attendance WHERE reg_no = $1 AND date = $2",
+      [regNo, date]
+    );
+    
+    let result;
+    
+    if (checkResult.rowCount > 0) {
+      // Update existing record
+      result = await pool.query(
+        "UPDATE attendance SET status = $1 WHERE reg_no = $2 AND date = $3 RETURNING *",
+        [status, regNo, date]
+      );
+    } else {
+      // Insert new record
+      result = await pool.query(
+        "INSERT INTO attendance (reg_no, date, status) VALUES ($1, $2, $3) RETURNING *",
+        [regNo, date, status]
+      );
+    }
+    
+    res.status(200).json({
+      message: "Attendance recorded successfully",
+      attendance: result.rows[0]
+    });
+  } catch (err) {
+    console.error("Error recording attendance:", err);
+    res.status(500).json({ message: "Failed to record attendance" });
+  }
+});
+
+// Get summary of attendance for a student for the current month
+app.get("/api/attendance/summary/:regNo", async (req, res) => {
+  const { regNo } = req.params;
+  const { month, year } = req.query;
+  
+  // Default to current month/year if not specified
+  const currentDate = new Date();
+  const currentMonth = month ? parseInt(month) : currentDate.getMonth() + 1;
+  const currentYear = year ? parseInt(year) : currentDate.getFullYear();
+  
+  try {
+    const result = await pool.query(
+      `SELECT 
+        COUNT(*) FILTER (WHERE status = 'in') as days_in,
+        COUNT(*) FILTER (WHERE status = 'out') as days_out,
+        COUNT(*) as total_records
+      FROM attendance 
+      WHERE reg_no = $1 
+      AND EXTRACT(MONTH FROM date) = $2 
+      AND EXTRACT(YEAR FROM date) = $3`,
+      [regNo, currentMonth, currentYear]
+    );
+    
+    // Calculate estimated bill (for example, 300 rupees per day for 'in' status)
+    const daysIn = parseInt(result.rows[0].days_in) || 0;
+    const estimatedBill = daysIn * 300; // 300 rupees per day
+    
+    res.json({
+      daysIn,
+      daysOut: parseInt(result.rows[0].days_out) || 0,
+      totalRecords: parseInt(result.rows[0].total_records) || 0,
+      estimatedBill,
+      month: currentMonth,
+      year: currentYear
+    });
+  } catch (err) {
+    console.error("Error fetching attendance summary:", err);
+    res.status(500).json({ message: "Failed to fetch attendance summary" });
+  }
+});
+
+// Get bill for a specific student
+app.get("/api/bill/:regNo", async (req, res) => {
+  const { regNo } = req.params;
+  const { month, year } = req.query;
+  
+  // Default to current month/year if not specified
+  const currentDate = new Date();
+  const currentMonth = month ? parseInt(month) : currentDate.getMonth() + 1;
+  const currentYear = year ? parseInt(year) : currentDate.getFullYear();
+  
+  try {
+    // Calculate the first and last day of the month
+    const startDate = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
+    const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+    const totalDays = new Date(currentYear, currentMonth, 0).getDate();
+    
+    // Get the number of days the student was marked "in"
+    const result = await pool.query(
+      `SELECT COUNT(*) as days_in 
+       FROM attendance 
+       WHERE reg_no = $1 AND date BETWEEN $2 AND $3 AND status = 'in'`,
+      [regNo, startDate, endDate]
+    );
+    
+    const daysIn = parseInt(result.rows[0].days_in) || 0;
+    const totalBill = daysIn * 500; // Rs. 500 per day
+    
+    // For demo purposes - consider a bill paid if it's from a previous month
+    const isPaidMonth = 
+      (currentYear < currentDate.getFullYear()) || 
+      (currentYear === currentDate.getFullYear() && currentMonth < currentDate.getMonth() + 1);
+    
+    res.json({
+      regNo,
+      month: currentMonth,
+      year: currentYear,
+      daysIn,
+      totalDays,
+      totalBill,
+      isPaid: isPaidMonth,
+      generatedOn: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Error calculating bill:", err);
+    res.status(500).json({ message: "Failed to calculate bill" });
+  }
+});
+
+// Get bill history for a student
+app.get("/api/bill/history/:regNo", async (req, res) => {
+  const { regNo } = req.params;
+  
+  try {
+    // Get a list of unique months that have attendance records
+    const monthsQuery = await pool.query(
+      `SELECT DISTINCT 
+        EXTRACT(YEAR FROM date) as year,
+        EXTRACT(MONTH FROM date) as month
+       FROM attendance 
+       WHERE reg_no = $1 
+       ORDER BY year DESC, month DESC`,
+      [regNo]
+    );
+    
+    const months = monthsQuery.rows;
+    const billHistory = [];
+    
+    // For each month, calculate the bill
+    for (const monthData of months) {
+      const year = parseInt(monthData.year);
+      const month = parseInt(monthData.month);
+      
+      const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
+      
+      const result = await pool.query(
+        `SELECT COUNT(*) as days_in 
+         FROM attendance 
+         WHERE reg_no = $1 AND date BETWEEN $2 AND $3 AND status = 'in'`,
+        [regNo, startDate, endDate]
+      );
+      
+      const daysIn = parseInt(result.rows[0].days_in) || 0;
+      const totalBill = daysIn * 500;
+      
+      // Consider bills from previous months as paid
+      const currentDate = new Date();
+      const isPaidMonth = 
+        (year < currentDate.getFullYear()) || 
+        (year === currentDate.getFullYear() && month < currentDate.getMonth() + 1);
+      
+      billHistory.push({
+        month,
+        year,
+        daysIn,
+        totalBill,
+        isPaid: isPaidMonth
+      });
+    }
+    
+    res.json(billHistory);
+  } catch (err) {
+    console.error("Error fetching bill history:", err);
+    res.status(500).json({ message: "Failed to fetch bill history" });
+  }
+});
+
 // Start server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);

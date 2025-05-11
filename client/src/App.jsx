@@ -10,7 +10,8 @@ import Menu from "./pages/Menu/Menu";
 import Rules from "./pages/Rules/Rules";
 import FAQs from "./pages/FAQs/FAQs";
 import Feedback from "./pages/Feedback/Feedback";
-import CompleteProfile from "./pages/CompleteProfile/CompleteProfile"; // Import the CompleteProfile component
+import CompleteProfile from "./pages/CompleteProfile/CompleteProfile";
+import MessBill from "./pages/MessBill/MessBill"; // Import the MessBill component
 
 function App() {
   return (
@@ -20,7 +21,7 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/forgotpassword" element={<ForgotPassword />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} /> {/* Add the CompleteProfile route */}
+        <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/dashboard" element={<DashBoard />} />
         <Route path="/DashBoard" element={<DashBoard />} />
         <Route path="/mess-inout" element={<MessInOut />} />
@@ -28,6 +29,7 @@ function App() {
         <Route path="/rules" element={<Rules />} />
         <Route path="/faqs" element={<FAQs />} />
         <Route path="/feedback" element={<Feedback />} />
+        <Route path="/mess-bill" element={<MessBill />} /> {/* Add the MessBill route */}
       </Routes>
     </Router>
   );

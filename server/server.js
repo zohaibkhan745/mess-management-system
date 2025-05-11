@@ -13,7 +13,7 @@ app.use(cors());
 // User Registration endpoint
 app.post("/adduser", async (req, res) => {
   console.log("Request body:", req.body);
-  
+
   // Try accessing the fields differently
   const name = req.body.name;
   const regNumber = req.body.regNumber;
@@ -35,7 +35,10 @@ app.post("/adduser", async (req, res) => {
     if (userCheck.rowCount > 0) {
       return res
         .status(400)
-        .json({ message: "User with this email or registration number already exists." });
+        .json({
+          message:
+            "User with this email or registration number already exists.",
+        });
     }
 
     // Insert new user into Students table
@@ -72,22 +75,24 @@ app.post("/signin", async (req, res) => {
     // Find user in Students table
     const query = "SELECT * FROM Students WHERE email = $1";
     const result = await pool.query(query, [email]);
-    
+
     if (result.rowCount === 0) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
     const user = result.rows[0];
-    
+
     // In a real application, you would compare hashed passwords
     if (user.password !== password) {
       console.log("Password mismatch");
       return res.status(401).json({ message: "Invalid email or password." });
     }
-    
+
     // Create a simple token
-    const token = Buffer.from(`${user.reg_no}:${user.email}`).toString("base64");
-    
+    const token = Buffer.from(`${user.reg_no}:${user.email}`).toString(
+      "base64"
+    );
+
     return res.status(200).json({
       message: "Login successful",
       token: token,
@@ -95,11 +100,62 @@ app.post("/signin", async (req, res) => {
         regNo: user.reg_no,
         name: user.name,
         email: user.email,
-        profileComplete: user.profile_complete || false
+        profileComplete: user.profile_complete || false,
       },
     });
   } catch (err) {
     console.error("Error during login:", err);
+    res
+      .status(500)
+      .json({ message: "Internal server error. Please try again." });
+  }
+});
+
+// Receptionist Signin endpoint
+app.post("/receptionist/signin", async (req, res) => {
+  const { email, password } = req.body;
+  console.log("Receptionist login attempt:", { email });
+
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Email and password are required." });
+  }
+
+  try {
+    // Find receptionist in receptionists table
+    const query = "SELECT * FROM receptionists WHERE email = $1";
+    const result = await pool.query(query, [email]);
+
+    if (result.rowCount === 0) {
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    const receptionist = result.rows[0];
+
+    // In a real application, you would compare hashed passwords
+    if (receptionist.password !== password) {
+      console.log("Password mismatch");
+      return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    // Create a simple token
+    const token = Buffer.from(
+      `${receptionist.id}:${receptionist.email}`
+    ).toString("base64");
+
+    return res.status(200).json({
+      message: "Login successful",
+      token: token,
+      user: {
+        id: receptionist.id,
+        name: receptionist.name,
+        email: receptionist.email,
+        role: "receptionist",
+      },
+    });
+  } catch (err) {
+    console.error("Error during receptionist login:", err);
     res
       .status(500)
       .json({ message: "Internal server error. Please try again." });
@@ -143,13 +199,57 @@ app.get("/menu", async (req, res) => {
   }
 });
 
+// Get meals data for the receptionist dashboard
+app.get("/api/meals", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM meals_menu ORDER BY id ASC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching meals:", err);
+    res.status(500).json({ message: "Failed to fetch meals data" });
+  }
+});
+
+// Update a meal for a specific day
+app.put("/api/meals/:day", async (req, res) => {
+  const { day } = req.params;
+  const { breakfast, lunch, dinner } = req.body;
+
+  if (!breakfast || !lunch || !dinner) {
+    return res.status(400).json({ message: "All meal fields are required" });
+  }
+
+  try {
+    const result = await pool.query(
+      "UPDATE meals_menu SET breakfast = $1, lunch = $2, dinner = $3 WHERE day = $4 RETURNING *",
+      [breakfast, lunch, dinner, day]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: `No menu found for ${day}` });
+    }
+
+    res.json({
+      message: `Menu for ${day} updated successfully`,
+      meal: result.rows[0],
+    });
+  } catch (err) {
+    console.error(`Error updating meal for ${day}:`, err);
+    res.status(500).json({ message: "Failed to update meal" });
+  }
+});
+
 // Endpoint to complete user profile
 app.post("/complete-profile", async (req, res) => {
   console.log("Complete profile request received:", req.body);
   const { regNo, degree, hostelName } = req.body;
-  
+
   if (!regNo || !degree || !hostelName) {
-    return res.status(400).json({ message: "Registration number, degree, and hostel name are required." });
+    return res
+      .status(400)
+      .json({
+        message: "Registration number, degree, and hostel name are required.",
+      });
   }
 
   try {
@@ -159,7 +259,7 @@ app.post("/complete-profile", async (req, res) => {
       "SELECT department_id FROM degrees WHERE department_name = $1",
       [degree]
     );
-    
+
     if (deptCheck.rowCount === 0) {
       // Department doesn't exist, create it
       const newDeptResult = await pool.query(
@@ -170,16 +270,21 @@ app.post("/complete-profile", async (req, res) => {
       console.log("Created new department:", degree, "with ID:", departmentId);
     } else {
       departmentId = deptCheck.rows[0].department_id;
-      console.log("Found existing department:", degree, "with ID:", departmentId);
+      console.log(
+        "Found existing department:",
+        degree,
+        "with ID:",
+        departmentId
+      );
     }
-    
+
     // Next, check if the hostel exists, if not create it
     let hostelId;
     const hostelCheck = await pool.query(
       "SELECT hostel_id FROM hostels WHERE hostel_name = $1", // Note: using lowercase table name
       [hostelName]
     );
-    
+
     if (hostelCheck.rowCount === 0) {
       // Hostel doesn't exist, create it
       const newHostelResult = await pool.query(
@@ -197,9 +302,9 @@ app.post("/complete-profile", async (req, res) => {
     console.log("Updating student profile with values:", {
       departmentId,
       hostelId,
-      regNo
+      regNo,
     });
-    
+
     const updateResult = await pool.query(
       "UPDATE students SET degree = $1, hostel_id = $2, profile_complete = TRUE WHERE reg_no = $3 RETURNING *", // Note: using lowercase table name
       [departmentId, hostelId, regNo]
@@ -211,7 +316,7 @@ app.post("/complete-profile", async (req, res) => {
     }
 
     const updatedUser = updateResult.rows[0];
-    
+
     return res.status(200).json({
       message: "Profile completed successfully",
       user: {
@@ -220,14 +325,14 @@ app.post("/complete-profile", async (req, res) => {
         email: updatedUser.email,
         degree,
         hostelName,
-        profileComplete: true
-      }
+        profileComplete: true,
+      },
     });
   } catch (err) {
     console.error("Error completing profile:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Internal server error. Please try again.",
-      error: err.message
+      error: err.message,
     });
   }
 });
@@ -262,21 +367,22 @@ app.get("/api/faqs", async (req, res) => {
 app.get("/api/attendance/:regNo", async (req, res) => {
   const { regNo } = req.params;
   const { month, year } = req.query;
-  
+
   try {
     let query = "SELECT * FROM attendance WHERE reg_no = $1";
     const params = [regNo];
-    
+
     if (month && year) {
       // Filter by specific month and year
-      query += " AND EXTRACT(MONTH FROM date) = $2 AND EXTRACT(YEAR FROM date) = $3";
+      query +=
+        " AND EXTRACT(MONTH FROM date) = $2 AND EXTRACT(YEAR FROM date) = $3";
       params.push(month, year);
     }
-    
+
     query += " ORDER BY date DESC";
-    
+
     const result = await pool.query(query, params);
-    
+
     res.json(result.rows);
   } catch (err) {
     console.error("Error fetching attendance:", err);
@@ -287,26 +393,26 @@ app.get("/api/attendance/:regNo", async (req, res) => {
 // Set/update attendance status for a student
 app.post("/api/attendance", async (req, res) => {
   const { regNo, date, status } = req.body;
-  
+
   // Check if the time is between 10 AM and 12 PM (restricted period)
   const currentTime = new Date();
   const currentHour = currentTime.getHours();
-  
+
   if (currentHour >= 10 && currentHour < 12) {
-    return res.status(403).json({ 
-      message: "Attendance changes are not allowed between 10 AM and 12 PM" 
+    return res.status(403).json({
+      message: "Attendance changes are not allowed between 10 AM and 12 PM",
     });
   }
-  
+
   try {
     // Check if a record already exists for this student and date
     const checkResult = await pool.query(
       "SELECT * FROM attendance WHERE reg_no = $1 AND date = $2",
       [regNo, date]
     );
-    
+
     let result;
-    
+
     if (checkResult.rowCount > 0) {
       // Update existing record
       result = await pool.query(
@@ -320,10 +426,10 @@ app.post("/api/attendance", async (req, res) => {
         [regNo, date, status]
       );
     }
-    
+
     res.status(200).json({
       message: "Attendance recorded successfully",
-      attendance: result.rows[0]
+      attendance: result.rows[0],
     });
   } catch (err) {
     console.error("Error recording attendance:", err);
@@ -335,12 +441,12 @@ app.post("/api/attendance", async (req, res) => {
 app.get("/api/attendance/summary/:regNo", async (req, res) => {
   const { regNo } = req.params;
   const { month, year } = req.query;
-  
+
   // Default to current month/year if not specified
   const currentDate = new Date();
   const currentMonth = month ? parseInt(month) : currentDate.getMonth() + 1;
   const currentYear = year ? parseInt(year) : currentDate.getFullYear();
-  
+
   try {
     const result = await pool.query(
       `SELECT 
@@ -353,18 +459,18 @@ app.get("/api/attendance/summary/:regNo", async (req, res) => {
       AND EXTRACT(YEAR FROM date) = $3`,
       [regNo, currentMonth, currentYear]
     );
-    
+
     // Calculate estimated bill (for example, 300 rupees per day for 'in' status)
     const daysIn = parseInt(result.rows[0].days_in) || 0;
     const estimatedBill = daysIn * 300; // 300 rupees per day
-    
+
     res.json({
       daysIn,
       daysOut: parseInt(result.rows[0].days_out) || 0,
       totalRecords: parseInt(result.rows[0].total_records) || 0,
       estimatedBill,
       month: currentMonth,
-      year: currentYear
+      year: currentYear,
     });
   } catch (err) {
     console.error("Error fetching attendance summary:", err);
@@ -376,18 +482,22 @@ app.get("/api/attendance/summary/:regNo", async (req, res) => {
 app.get("/api/bill/:regNo", async (req, res) => {
   const { regNo } = req.params;
   const { month, year } = req.query;
-  
+
   // Default to current month/year if not specified
   const currentDate = new Date();
   const currentMonth = month ? parseInt(month) : currentDate.getMonth() + 1;
   const currentYear = year ? parseInt(year) : currentDate.getFullYear();
-  
+
   try {
     // Calculate the first and last day of the month
-    const startDate = new Date(currentYear, currentMonth - 1, 1).toISOString().split('T')[0];
-    const endDate = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+    const startDate = new Date(currentYear, currentMonth - 1, 1)
+      .toISOString()
+      .split("T")[0];
+    const endDate = new Date(currentYear, currentMonth, 0)
+      .toISOString()
+      .split("T")[0];
     const totalDays = new Date(currentYear, currentMonth, 0).getDate();
-    
+
     // Get the number of days the student was marked "in"
     const result = await pool.query(
       `SELECT COUNT(*) as days_in 
@@ -395,15 +505,16 @@ app.get("/api/bill/:regNo", async (req, res) => {
        WHERE reg_no = $1 AND date BETWEEN $2 AND $3 AND status = 'in'`,
       [regNo, startDate, endDate]
     );
-    
+
     const daysIn = parseInt(result.rows[0].days_in) || 0;
     const totalBill = daysIn * 500; // Rs. 500 per day
-    
+
     // For demo purposes - consider a bill paid if it's from a previous month
-    const isPaidMonth = 
-      (currentYear < currentDate.getFullYear()) || 
-      (currentYear === currentDate.getFullYear() && currentMonth < currentDate.getMonth() + 1);
-    
+    const isPaidMonth =
+      currentYear < currentDate.getFullYear() ||
+      (currentYear === currentDate.getFullYear() &&
+        currentMonth < currentDate.getMonth() + 1);
+
     res.json({
       regNo,
       month: currentMonth,
@@ -412,7 +523,7 @@ app.get("/api/bill/:regNo", async (req, res) => {
       totalDays,
       totalBill,
       isPaid: isPaidMonth,
-      generatedOn: new Date().toISOString()
+      generatedOn: new Date().toISOString(),
     });
   } catch (err) {
     console.error("Error calculating bill:", err);
@@ -423,7 +534,7 @@ app.get("/api/bill/:regNo", async (req, res) => {
 // Get bill history for a student
 app.get("/api/bill/history/:regNo", async (req, res) => {
   const { regNo } = req.params;
-  
+
   try {
     // Get a list of unique months that have attendance records
     const monthsQuery = await pool.query(
@@ -435,43 +546,46 @@ app.get("/api/bill/history/:regNo", async (req, res) => {
        ORDER BY year DESC, month DESC`,
       [regNo]
     );
-    
+
     const months = monthsQuery.rows;
     const billHistory = [];
-    
+
     // For each month, calculate the bill
     for (const monthData of months) {
       const year = parseInt(monthData.year);
       const month = parseInt(monthData.month);
-      
-      const startDate = new Date(year, month - 1, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, month, 0).toISOString().split('T')[0];
-      
+
+      const startDate = new Date(year, month - 1, 1)
+        .toISOString()
+        .split("T")[0];
+      const endDate = new Date(year, month, 0).toISOString().split("T")[0];
+
       const result = await pool.query(
         `SELECT COUNT(*) as days_in 
          FROM attendance 
          WHERE reg_no = $1 AND date BETWEEN $2 AND $3 AND status = 'in'`,
         [regNo, startDate, endDate]
       );
-      
+
       const daysIn = parseInt(result.rows[0].days_in) || 0;
       const totalBill = daysIn * 500;
-      
+
       // Consider bills from previous months as paid
       const currentDate = new Date();
-      const isPaidMonth = 
-        (year < currentDate.getFullYear()) || 
-        (year === currentDate.getFullYear() && month < currentDate.getMonth() + 1);
-      
+      const isPaidMonth =
+        year < currentDate.getFullYear() ||
+        (year === currentDate.getFullYear() &&
+          month < currentDate.getMonth() + 1);
+
       billHistory.push({
         month,
         year,
         daysIn,
         totalBill,
-        isPaid: isPaidMonth
+        isPaid: isPaidMonth,
       });
     }
-    
+
     res.json(billHistory);
   } catch (err) {
     console.error("Error fetching bill history:", err);

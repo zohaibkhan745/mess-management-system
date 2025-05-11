@@ -8,6 +8,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  /* Added isolation to create a new stacking context */
+  isolation: isolate;
 }
 
 .rules-container::before {
@@ -17,8 +19,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(8, 15, 30, 0.6);
-  z-index: 0;
+  background-color: rgba(
+    8,
+    15,
+    30,
+    0.85
+  ); /* Increased opacity for better contrast */
+  z-index: -1; /* Changed from 0 to -1 to ensure content is above */
 }
 
 .rules-header {
@@ -26,11 +33,16 @@
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  background-color: rgba(13, 27, 42, 0.8);
+  background-color: rgba(
+    13,
+    27,
+    42,
+    0.98
+  ); /* Increased opacity for better visibility */
   color: white;
   position: relative;
-  z-index: 1;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 100; /* Increased significantly to ensure header is on top */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); /* Stronger shadow for depth */
 }
 
 .logo {
@@ -85,7 +97,7 @@
 
 .rules-content {
   position: relative;
-  z-index: 1;
+  z-index: 50; /* Increased to be clearly above background but below header */
   padding: 20px;
   display: flex;
   justify-content: center;
@@ -95,14 +107,22 @@
 }
 
 .rules-card {
-  background-color: rgba(26, 44, 68, 0.9);
+  background-color: rgba(
+    32,
+    50,
+    75,
+    0.98
+  ); /* Increased opacity for better visibility */
   border-radius: 12px;
   padding: 30px;
   position: relative;
   color: white;
   width: 100%;
   max-width: 800px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.75); /* Stronger shadow */
+  z-index: 60; /* Make sure it's above content container */
+  transform: translateZ(0);
+  border: 1px solid rgba(255, 255, 255, 0.2); /* More visible border */
 }
 
 .back-button {
@@ -112,20 +132,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.5); /* Increased opacity */
-  color: #000; /* Changed to black for visibility */
+  background-color: white;
+  color: #000;
   border: none;
-  font-size: 24px;
+  font-size: 26px;
   cursor: pointer;
   text-decoration: none;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  z-index: 150; /* Very high z-index to ensure it's above everything */
+  transform: translateZ(0);
 }
 
 .back-button:hover {
-  background-color: rgba(255, 255, 255, 0.7); /* Brighter on hover */
+  background-color: #fff; /* Solid white on hover */
 }
 
 .back-button span {
@@ -139,6 +162,19 @@
   margin: 10px 0 30px;
   color: white;
   font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Add shadow for better visibility */
+  position: relative;
+  z-index: 4;
+}
+
+/* Add a subtle separator under the title */
+.card-title:after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 3px;
+  background-color: #e61e79;
+  margin: 15px auto 0;
 }
 
 .rules-list {
@@ -150,10 +186,22 @@
 .rule-item {
   font-size: 16px;
   line-height: 1.6;
-  color: white; /* Ensuring text is white for visibility against dark background */
-  background-color: rgba(255, 255, 255, 0.1); /* Adding subtle background */
-  padding: 10px 15px; /* Adding padding for better readability */
-  border-radius: 6px; /* Rounded corners */
+  color: white;
+  background-color: rgba(
+    255,
+    255,
+    255,
+    0.2
+  ); /* Increased from 0.15 for better contrast */
+  padding: 15px 20px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #e61e79;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5); /* Stronger shadow */
+  transform: translateZ(0);
+  position: relative;
+  z-index: 65; /* Above card */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Add text shadow for better readability */
 }
 
 .rule-number {
@@ -163,7 +211,8 @@
 
 .rule-title {
   font-weight: bold;
-  color: #fff; /* Ensuring title is visible */
+  color: #ff91c1; /* Brighter color for better visibility */
+  margin-right: 5px;
 }
 
 @media (max-width: 768px) {
@@ -185,28 +234,35 @@
   text-align: center;
   padding: 20px;
   font-size: 18px;
-  color: #000; /* Changed from #666 to black */
+  color: #fff;
   background-color: rgba(
-    255,
-    255,
-    255,
-    0.8
-  ); /* Added semi-transparent white background */
+    13,
+    27,
+    42,
+    0.9
+  ); /* Increased opacity from 0.7 to 0.9 */
   border-radius: 5px;
   margin-bottom: 20px;
+  font-weight: bold; /* Added bold for visibility */
 }
 
 .error-message {
   text-align: center;
   padding: 20px;
   font-size: 16px;
-  color: #e53935; /* Keep error text red */
-  background-color: rgba(
-    255,
-    235,
-    238,
-    0.9
-  ); /* Made error background more opaque */
+  color: #ff5252; /* Brighter red */
+  background-color: rgba(255, 235, 238, 0.95); /* More opaque */
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-weight: bold; /* Make error text bold */
+}
+
+.no-rules-message {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #fff;
+  background-color: rgba(13, 27, 42, 0.7);
   border-radius: 5px;
   margin-bottom: 20px;
 }

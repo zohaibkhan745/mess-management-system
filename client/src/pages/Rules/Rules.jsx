@@ -65,13 +65,21 @@ export default function Rules() {
           <h1 className="card-title">Mess Rules & Guidelines</h1>
 
           {loading ? (
-            <div className="loading">Loading rules...</div>
+            <div className="loading">
+              <i className="fas fa-spinner fa-spin"></i> Loading rules...
+            </div>
           ) : error ? (
-            <div className="error-message">{error}</div>
+            <div className="error-message">
+              <i className="fas fa-exclamation-circle"></i> {error}
+            </div>
+          ) : messRules.length === 0 ? (
+            <div className="no-rules-message">
+              No rules have been added yet.
+            </div>
           ) : (
             <div className="rules-list">
               {messRules.map((rule, index) => (
-                <div key={rule.rule_id} className="rule-item">
+                <div key={rule.rule_id || index} className="rule-item">
                   <p>
                     <span className="rule-number">{index + 1}. </span>
                     <span className="rule-title">{rule.title} </span>

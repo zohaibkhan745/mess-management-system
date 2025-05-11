@@ -5,8 +5,8 @@ import Button from "../../components/button.jsx";
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
+    regNumber: "",
     email: "",
     password: "",
     confirmPassword: ""
@@ -19,14 +19,14 @@ const SignUp = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    } else if (formData.firstName.length < 2) {
-      newErrors.firstName = "First name must be at least 2 characters";
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    } else if (formData.name.length < 2) {
+      newErrors.name = "Name must be at least 2 characters";
     }
 
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+    if (!formData.regNumber.trim()) {
+      newErrors.regNumber = "Registration number is required";
     }
 
     if (!formData.email.trim()) {
@@ -71,8 +71,8 @@ const SignUp = () => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          fname: formData.firstName,
-          lname: formData.lastName,
+          name: formData.name.trim(),
+          regNumber: formData.regNumber,
           email: formData.email,
           password: formData.password
         })
@@ -111,17 +111,16 @@ const SignUp = () => {
           <div className="form-container">
             <h1>Create Account</h1>
             <form onSubmit={handleSubmit}>
-              <div className="name">
-                <div className="input-group">
-                  <label htmlFor="firstName">First Name</label>
-                  <input id="firstName" type="text" value={formData.firstName} onChange={handleChange} className={errors.firstName ? "error-input" : ""} />
-                  {errors.firstName && <span className="error-message">{errors.firstName}</span>}
-                </div>
-                <div className="input-group">
-                  <label htmlFor="lastName">Last Name</label>
-                  <input id="lastName" type="text" value={formData.lastName} onChange={handleChange} className={errors.lastName ? "error-input" : ""} />
-                  {errors.lastName && <span className="error-message">{errors.lastName}</span>}
-                </div>
+              <div className="input-group">
+                <label htmlFor="name">Full Name</label>
+                <input id="name" type="text" value={formData.name} onChange={handleChange} className={errors.name ? "error-input" : ""} />
+                {errors.name && <span className="error-message">{errors.name}</span>}
+              </div>
+
+              <div className="input-group">
+                <label htmlFor="regNumber">Registration Number</label>
+                <input id="regNumber" type="text" value={formData.regNumber} onChange={handleChange} className={errors.regNumber ? "error-input" : ""} />
+                {errors.regNumber && <span className="error-message">{errors.regNumber}</span>}
               </div>
 
               <div className="input-group">

@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import SignUp from "./pages/SignUp/SignUp";
 import SignIn from "./pages/SignIn/SignIn";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
-import LandingPage from "./pages/LandingPage/landingPage";
+import LandingPage from "./pages/LandingPage/LandingPage";
 import DashBoard from "./pages/DashBoard/DashBoard"; // Import the Dashboard component
 import MessInOut from "./pages/MessInOut/MessInOut"; // Import the MessInOut component
 import Menu from "./pages/Menu/Menu"; // Import the Menu component

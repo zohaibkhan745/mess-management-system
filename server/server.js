@@ -12,28 +12,36 @@ app.use(cors());
 
 // User Registration endpoint
 app.post("/adduser", async (req, res) => {
-  const { fname, lname, email, password } = req.body;
+  console.log("Request body:", req.body);
+  
+  // Try accessing the fields differently
+  const name = req.body.name;
+  const regNumber = req.body.regNumber;
+  const email = req.body.email;
+  const password = req.body.password;
 
-  if (!fname || !lname || !email || !password) {
+  console.log("Fields:", { name, regNumber, email, password });
+
+  if (!name || !regNumber || !email || !password) {
     return res.status(400).json({ message: "All fields are required." });
   }
 
   try {
     // Check if user already exists
     const userCheck = await pool.query(
-      "SELECT * FROM students_accounts_info WHERE email = $1",
-      [email]
+      "SELECT * FROM Students WHERE email = $1 OR reg_no = $2",
+      [email, regNumber]
     );
     if (userCheck.rowCount > 0) {
       return res
         .status(400)
-        .json({ message: "User with this email already exists." });
+        .json({ message: "User with this email or registration number already exists." });
     }
 
-    // Insert new user
+    // Insert new user into Students table
     const result = await pool.query(
-      "INSERT INTO students_accounts_info (fname, lname, email, password) VALUES ($1, $2, $3, $4) RETURNING id, fname, lname, email",
-      [fname, lname, email, password]
+      "INSERT INTO Students (reg_no, name, email, password, degree, hostel_id) VALUES ($1, $2, $3, $4, NULL, NULL) RETURNING reg_no, name, email",
+      [regNumber, name, email, password]
     );
 
     // Return success
@@ -49,55 +57,7 @@ app.post("/adduser", async (req, res) => {
   }
 });
 
-// Keep the signup endpoint for backward compatibility
-app.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
-  let fname = name;
-  let lname = "";
-
-  // Split name into first and last name if it contains a space
-  if (name && name.includes(" ")) {
-    const nameParts = name.split(" ");
-    fname = nameParts[0];
-    lname = nameParts.slice(1).join(" ");
-  }
-
-  if (!fname || !email || !password) {
-    return res.status(400).json({ message: "All fields are required." });
-  }
-
-  try {
-    // Check if user already exists
-    const userCheck = await pool.query(
-      "SELECT * FROM students_accounts_info WHERE email = $1",
-      [email]
-    );
-    if (userCheck.rowCount > 0) {
-      return res
-        .status(400)
-        .json({ message: "User with this email already exists." });
-    }
-
-    // Insert new user
-    const result = await pool.query(
-      "INSERT INTO students_accounts_info (fname, lname, email, password) VALUES ($1, $2, $3, $4) RETURNING id, fname, lname, email",
-      [fname, lname, email, password]
-    );
-
-    // Return success
-    res.status(201).json({
-      message: "User registered successfully",
-      user: result.rows[0],
-    });
-  } catch (err) {
-    console.error("Error during registration:", err);
-    res
-      .status(500)
-      .json({ message: "Internal server error. Please try again." });
-  }
-});
-
-// Signin endpoint
+// Signin endpoint - Updated to only use Students table
 app.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   console.log("Login attempt:", { email });
@@ -109,36 +69,31 @@ app.post("/signin", async (req, res) => {
   }
 
   try {
-    // Query to check if the user exists with the provided credentials
-    const query = "SELECT * FROM students_accounts_info WHERE email = $1";
+    // Find user in Students table
+    const query = "SELECT * FROM Students WHERE email = $1";
     const result = await pool.query(query, [email]);
-    console.log("Query result:", { rowCount: result.rowCount });
-
-    // Check if user exists
+    
     if (result.rowCount === 0) {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const user = result.rows[0];
-    console.log("User found:", { id: user.id, email: user.email });
-
+    const user = result.rows[0]; // Define the user variable by getting first row
+    
     // In a real application, you would compare hashed passwords
-    // For this example, we're assuming the passwords are stored in plain text
     if (user.password !== password) {
       console.log("Password mismatch");
       return res.status(401).json({ message: "Invalid email or password." });
     }
-
-    // Create a simple token (in a real app, use JWT)
-    const token = Buffer.from(`${user.id}:${user.email}`).toString("base64");
-
-    // Return success with token
-    res.status(200).json({
+    
+    // Create a simple token
+    const token = Buffer.from(`${user.reg_no}:${user.email}`).toString("base64");
+    
+    return res.status(200).json({
       message: "Login successful",
       token: token,
       user: {
-        id: user.id,
-        name: `${user.fname} ${user.lname}`.trim(),
+        regNo: user.reg_no,
+        name: user.name,
         email: user.email,
       },
     });

@@ -57,7 +57,7 @@ app.post("/adduser", async (req, res) => {
   }
 });
 
-// Signin endpoint - Updated to only use Students table
+// Signin endpoint - Updated to include profile_complete status
 app.post("/signin", async (req, res) => {
   const { email, password } = req.body;
   console.log("Login attempt:", { email });
@@ -77,7 +77,7 @@ app.post("/signin", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
-    const user = result.rows[0]; // Define the user variable by getting first row
+    const user = result.rows[0];
     
     // In a real application, you would compare hashed passwords
     if (user.password !== password) {
@@ -95,6 +95,7 @@ app.post("/signin", async (req, res) => {
         regNo: user.reg_no,
         name: user.name,
         email: user.email,
+        profileComplete: user.profile_complete || false
       },
     });
   } catch (err) {

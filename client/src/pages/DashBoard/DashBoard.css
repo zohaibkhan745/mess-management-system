@@ -170,6 +170,12 @@
   .profile-icon {
     margin-top: 15px;
   }
+
+  .profile-section {
+    margin-top: 15px;
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 576px) {
@@ -187,4 +193,28 @@
   .dashboard-nav ul {
     gap: 10px;
   }
+}
+
+/* Add these styles to your DashBoard.css file */
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.logout-button {
+  background-color: #e61e79;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 15px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.logout-button:hover {
+  background-color: #d41a6b;
 }

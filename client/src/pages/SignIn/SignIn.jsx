@@ -8,6 +8,7 @@ const SignIn = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isReceptionist, setIsReceptionist] = useState(false);
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -38,23 +39,36 @@ const SignIn = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:4000/signin", {
+      // Use different endpoint based on user type
+      const endpoint = isReceptionist 
+        ? "http://localhost:4000/receptionist/signin" 
+        : "http://localhost:4000/signin";
+      
+      const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
+      
       const data = await response.json();
+      
       if (response.ok) {
         if (data.token) {
           localStorage.setItem("authToken", data.token);
           localStorage.setItem("userData", JSON.stringify(data.user));
+          localStorage.setItem("userRole", isReceptionist ? "receptionist" : "student");
         }
         
-        // Check if profile is complete
-        if (!data.user.profileComplete) {
-          navigate("/complete-profile");
+        // Navigate based on user type
+        if (isReceptionist) {
+          navigate("/receptionist-dashboard");
         } else {
-          navigate("/dashboard");
+          // Check if profile is complete for students
+          if (!data.user.profileComplete) {
+            navigate("/complete-profile");
+          } else {
+            navigate("/dashboard");
+          }
         }
       } else {
         setErrors({ ...errors, serverError: data.message || "Invalid email or password" });
@@ -77,6 +91,23 @@ const SignIn = () => {
         <div className="right-panel">
           <div className="form-container">
             <h1>Sign In</h1>
+            
+            {/* User type toggle */}
+            <div className="user-type-toggle">
+              <div className="toggle-container">
+                <span className={!isReceptionist ? "active" : ""}>Student</span>
+                <label className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={isReceptionist} 
+                    onChange={() => setIsReceptionist(!isReceptionist)}
+                  />
+                  <span className="slider round"></span>
+                </label>
+                <span className={isReceptionist ? "active" : ""}>Receptionist</span>
+              </div>
+            </div>
+            
             <form onSubmit={handleSubmit}>
               <div className="input-group">
                 <label htmlFor="email">Email</label>
@@ -86,6 +117,7 @@ const SignIn = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className={errors.email ? "error-input" : ""}
+                  placeholder={isReceptionist ? "Receptionist email" : "Student email"}
                   autoComplete="username"
                 />
                 {errors.email && <span className="error-message">{errors.email}</span>}
@@ -110,7 +142,7 @@ const SignIn = () => {
               )}
               <div className="input-group">
                 <Button
-                  text={isSubmitting ? "Signing In..." : "Sign In"}
+                  text={isSubmitting ? "Signing In..." : `Sign In as ${isReceptionist ? 'Receptionist' : 'Student'}`}
                   className="create-btn"
                   disabled={isSubmitting}
                 />

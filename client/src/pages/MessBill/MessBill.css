@@ -78,13 +78,18 @@
   color: #333;
   cursor: pointer;
   text-decoration: none;
-  display: flex;  /* Make it always visible */
+  display: flex; /* Make it always visible */
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05); /* Light background to make it visible */
+  background-color: rgba(
+    0,
+    0,
+    0,
+    0.05
+  ); /* Light background to make it visible */
   transition: background-color 0.3s ease;
 }
 
@@ -367,20 +372,19 @@
   .back-button,
   .bill-filter,
   .history-toggle,
-  .bill-actions,
-  .messbill-nav {
+  .bill-actions {
     display: none;
   }
-  
+
   .messbill-card {
     box-shadow: none;
     padding: 0;
   }
-  
+
   .messbill-content {
     padding: 0;
   }
-  
+
   .card-title {
     font-size: 24px;
   }
@@ -391,29 +395,29 @@
     flex-direction: column;
     padding: 15px;
   }
-  
+
   .messbill-nav ul {
     margin-top: 15px;
     justify-content: center;
   }
-  
+
   .profile-icon {
     margin-top: 15px;
   }
-  
+
   .period-selector {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .bill-info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .messbill-content {
     padding: 20px;
   }
-  
+
   .messbill-card {
     padding: 20px;
   }

@@ -93,6 +93,14 @@
   justify-content: center;
   font-weight: bold;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  /* Ensure perfect circle with fixed dimensions */
+  min-width: 36px; /* Prevent horizontal compression */
+  min-height: 36px; /* Prevent vertical compression */
+  aspect-ratio: 1 / 1; /* Force 1:1 aspect ratio */
+  overflow: hidden; /* Ensure content doesn't break the circle */
+  text-align: center; /* Center the text horizontally */
+  line-height: 36px; /* Center the text vertically */
+  font-size: 16px; /* Adjust text size to fit well in the circle */
 }
 
 .rules-content {

@@ -1,11 +1,29 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Feedback.css";
 
 export default function Feedback() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get user data from localStorage
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      const parsedUser = JSON.parse(storedUserData);
+      setUserData(parsedUser);
+      // Pre-fill email if available
+      if (parsedUser.email) {
+        setEmail(parsedUser.email);
+      }
+    } else {
+      // Redirect to login if no user data found
+      navigate("/signin");
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +38,7 @@ export default function Feedback() {
       if (response.ok) {
         setSubmitted(true);
         setTimeout(() => {
-          setEmail("");
+          setEmail(userData?.email || "");
           setMessage("");
           setSubmitted(false);
         }, 3000);
@@ -44,21 +62,8 @@ export default function Feedback() {
           />
           <span>Giki Mess Management System</span>
         </div>
-        <nav className="feedback-nav">
-          <ul>
-            <li>
-              <a href="#about">about</a>
-            </li>
-            <li>
-              <a href="#pricing">pricing</a>
-            </li>
-            <li>
-              <a href="#contact">contact</a>
-            </li>
-          </ul>
-        </nav>
         <div className="profile-icon">
-          <div className="avatar">A</div>
+          <div className="avatar">{userData?.name?.[0] || "A"}</div>
         </div>
       </header>
 

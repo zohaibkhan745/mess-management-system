@@ -1,0 +1,11 @@
+/* Add this to relevant CSS files */
+.profile-section, .profile-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.username {
+  font-weight: 500;
+  color: white; /* Adjust color based on your design */
+}

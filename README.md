@@ -1,6 +1,6 @@
 # Mess Management System
 
-A full-stack web application that digitizes day-to-day hostel mess operations for FAST-NUCES students and reception staff. The project centralizes meal planning, attendance, billing, student onboarding, and policy communication so every stakeholder can complete their jobs from a single portal.
+A full-stack web application that digitizes day-to-day hostel mess operations for GIKI students and reception staff. The project centralizes meal planning, attendance, billing, student onboarding, and policy communication so every stakeholder can complete their jobs from a single portal.
 
 > 📄 Detailed requirements, user interviews, and design decisions live in the accompanying `SRS Document Mess Management System.pdf` and `Stakeholders Response.pdf`. This README distills how those requirements materialize in code.
 

@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./FAQs.css";
 
 export default function FAQs() {
   const [faqsList, setFaqsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Get user data from localStorage
+    const storedUserData = localStorage.getItem("userData");
+    if (storedUserData) {
+      const parsedUser = JSON.parse(storedUserData);
+      setUserData(parsedUser);
+    } else {
+      // Redirect to login if no user data found
+      navigate("/signin");
+      return;
+    }
+
     const fetchFAQs = async () => {
       try {
         const response = await fetch("http://localhost:4000/api/faqs");
@@ -25,7 +38,7 @@ export default function FAQs() {
     };
 
     fetchFAQs();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="faqs-container">
@@ -38,21 +51,8 @@ export default function FAQs() {
           />
           <span>Giki Mess Management System</span>
         </div>
-        <nav className="faqs-nav">
-          <ul>
-            <li>
-              <a href="#about">about</a>
-            </li>
-            <li>
-              <a href="#pricing">pricing</a>
-            </li>
-            <li>
-              <a href="#contact">contact</a>
-            </li>
-          </ul>
-        </nav>
         <div className="profile-icon">
-          <div className="avatar">A</div>
+          <div className="avatar">{userData?.name?.[0] || "A"}</div>
         </div>
       </header>
 
@@ -71,7 +71,7 @@ export default function FAQs() {
           ) : (
             <div className="faqs-list">
               {faqsList.map((faq, index) => (
-                <div key={faq.faq_id} className="faq-item">
+                <div key={faq.faq_id || index} className="faq-item">
                   <div className="faq-question">
                     <p>
                       <strong>

@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./Rules.css";
 
 export default function Rules() {
   const [messRules, setMessRules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Check if user is logged in
+    const storedUserData = localStorage.getItem("userData");
+    if (!storedUserData) {
+      navigate("/signin");
+      return;
+    }
+
+    // Set user data
+    const parsedUser = JSON.parse(storedUserData);
+    setUserData(parsedUser);
+
     const fetchRules = async () => {
       try {
         const response = await fetch("http://localhost:4000/api/rules");
@@ -25,7 +38,7 @@ export default function Rules() {
     };
 
     fetchRules();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="rules-container">
@@ -38,21 +51,8 @@ export default function Rules() {
           />
           <span>Giki Mess Management System</span>
         </div>
-        <nav className="rules-nav">
-          <ul>
-            <li>
-              <a href="#about">about</a>
-            </li>
-            <li>
-              <a href="#pricing">pricing</a>
-            </li>
-            <li>
-              <a href="#contact">contact</a>
-            </li>
-          </ul>
-        </nav>
         <div className="profile-icon">
-          <div className="avatar">A</div>
+          <div className="avatar">{userData?.name?.[0] || "A"}</div>
         </div>
       </header>
 

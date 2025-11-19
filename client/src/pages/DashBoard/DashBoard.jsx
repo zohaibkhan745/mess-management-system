@@ -38,19 +38,6 @@ export default function Dashboard() {
           />
           <span>Giki Mess Management System</span>
         </div>
-        <nav className="dashboard-nav">
-          <ul>
-            <li>
-              <a href="#about">about</a>
-            </li>
-            <li>
-              <a href="#pricing">pricing</a>
-            </li>
-            <li>
-              <a href="#contact">contact</a>
-            </li>
-          </ul>
-        </nav>
         <div className="profile-section">
           <div className="avatar">{user?.name?.[0] || "A"}</div>
           <button onClick={handleLogout} className="logout-button">

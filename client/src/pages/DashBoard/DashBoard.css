@@ -69,6 +69,14 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  /* Ensure perfect circle with fixed dimensions */
+  min-width: 36px; /* Prevent horizontal compression */
+  min-height: 36px; /* Prevent vertical compression */
+  aspect-ratio: 1 / 1; /* Force 1:1 aspect ratio */
+  overflow: hidden; /* Ensure content doesn't break the circle */
+  text-align: center; /* Center the text horizontally */
+  line-height: 36px; /* Center the text vertically */
+  font-size: 16px; /* Adjust text size to fit well in the circle */
 }
 
 .dashboard-main {
@@ -123,7 +131,7 @@
 
 /* New styles to add a hover indicator */
 .menu-item::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -213,6 +221,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.3s;
+  margin-bottom: 15px;
 }
 
 .logout-button:hover {
